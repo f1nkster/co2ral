@@ -1,0 +1,149 @@
+[tool.poetry]
+name = "CO2RAL - A web UI for modeling marine carbon systems"
+version = "1.0.0"
+description = "Graphical user interface for exploring the carbon model of PyCO2SYS."
+authors = ["Pascal Heiter <pfheiter@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pyproject-flake8 = "^7.0.0"
+pyco2sys = "^1.8.3.4"
+dash = "^2.18.2"
+plotly = "^5.24.1"
+pandas = "^2.2.3"
+dash-core-components = "^2.0.0"
+dash-echarts = "^0.0.12.9"
+dash-bootstrap-components = "^1.7.1"
+loguru = "^0.7.2"
+dash-mantine-components = "^0.15.2"
+dash-iconify = "^0.1.2"
+dash-daq = "^0.5.0"
+
+[tool.poetry.dev-dependencies]
+pre-commit = "^4.0.1"
+ruff = "^0.8.3"
+mypy = "^1.7.1"
+pylint = "^3.0.2"
+dash = {extras = ["testing"], version = "*"}
+pytest = "^7.4.3"
+pytest-cov = "^4.1.0"
+pytest-mock = "^3.14.0"
+
+[build-system]
+requires = ['poetry-core~=1.0']
+build-backend = 'poetry.core.masonry.api'
+
+[tool.ruff]
+exclude = [
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".ipynb_checkpoints",
+    ".mypy_cache",
+    ".nox",
+    ".pytest_cache",
+    ".ruff_cache",
+    ".tox",
+    ".svn",
+    ".venv",
+    ".vscode",
+    "__pycache__",
+    "pypackages",
+    "build",
+    "buck-out",
+    "build",
+    "dist",
+    "venv",
+    "migrations",
+    "notebooks",
+    "scripts",
+    "protobuf"
+]
+line-length = 120
+indent-width = 4
+target-version = "py311"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint]
+select = ["B", "C", "I", "E", "F", "W", "N", "D", "UP"]
+ignore = ["E203", "E266", "E501", "E231",  # the default ones
+          "B006", "B008", "B904", "N818", "UP007", "UP022", # newly added with switching to ruff
+          "D100", "D101", "D104", "D105", "D107", "D203", "D205", "D211", "D213", "D400", "D401", "D415"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"conftest.py" = ["F401"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 18
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = true
+order-by-type = true
+lines-after-imports = 2
+lines-between-types = 0
+detect-same-package = true
+from-first = false
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 120
+max-line-length = 120
+ignore-overlong-task-comments = true
+
+[tool.pylint.main]
+load-plugins = ["pylint.extensions.docstyle", "pylint.extensions.docparams"]
+ignore = ["migrations", "venv", ".venv", "build", "dist", 'scripts']
+
+[tool.pylint."MESSAGES CONTROL"]
+disable="all"
+enable=[
+    # Docstring rules.
+    "differing-param-doc",
+    "multiple-constructor-doc",
+    "missing-param-doc",
+    "useless-param-doc",
+    "missing-any-param-doc",
+    "missing-return-doc",
+    "missing-yield-doc",
+    "redundant-returns-doc"
+]
+
+[tool.pylint."MASTER"]
+init-hook="import sys, os; sys.path.append(os.path.join(os.getcwd(), 'co2ral'))"
+ignore-paths = ['tests', '.venv', 'venv', 'migrations']
+
+[tool.pylint.logging]
+logging-format-style = "new"
+logging-modules = ["logging"]
+
+[tool.pylint.docparams]
+accept-no-param-doc = false
+accept-no-raise-doc = true
+accept-no-return-doc = false
+accept-no-yields-doc = false
+default-docstring-type = "sphinx"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests"
+]
+pythonpath = [
+    "co2ral"
+]
+
+[tool.mypy]
+# https://mypy.readthedocs.io/en/latest/config_file.html#using-a-pyproject-toml-file
+files= ["co2ral", "tests"]
+ignore_missing_imports = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
