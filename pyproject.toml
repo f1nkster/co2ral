@@ -19,6 +19,7 @@ loguru = "^0.7.2"
 dash-mantine-components = "^0.15.2"
 dash-iconify = "^0.1.2"
 dash-daq = "^0.5.0"
+types-waitress = "^3.0.1.20241117"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^4.0.1"

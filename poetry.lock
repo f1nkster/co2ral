@@ -1768,6 +1768,17 @@ files = [
 ]
 
 [[package]]
+name = "types-waitress"
+version = "3.0.1.20241117"
+description = "Typing stubs for waitress"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-waitress-3.0.1.20241117.tar.gz", hash = "sha256:1df08f8de36cc30ddade179e1cb28c59776e89a1a2874893b59fe2ea00a823a0"},
+    {file = "types_waitress-3.0.1.20241117-py3-none-any.whl", hash = "sha256:4700d2f22bacab5f817692faf25f9b7d43810b72ab7434a628a5a4cd1f5766fd"},
+]
+
+[[package]]
 name = "typing-extensions"
 version = "4.12.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -1894,4 +1905,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "de2ada2a8d9c0d34314c7f07ab381f3473f3feb7600bbf893d97dfde4cfe6a10"
+content-hash = "8749f77ee26188ec00688e7dc395eb6c6a45b29d910aa5db118572b451da851d"
