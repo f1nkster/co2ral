@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "CO2RAL - A web UI for modeling marine carbon systems"
+name = "CO2RAL"
 version = "1.0.0"
 description = "Graphical user interface for exploring the carbon model of PyCO2SYS."
 authors = ["Pascal Heiter <pfheiter@gmail.com>"]

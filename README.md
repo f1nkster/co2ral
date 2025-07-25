@@ -42,3 +42,7 @@
 * Advanced Settings:
     * Gleichgewichtskonstanten
 * Future ideas- jmol integration
+
+# Deployment
+CO2RAL is using waitress for the WSGI app and nginx for the webserver.
+Linux service is defined in /etc/systemd/system/co2ral.service
