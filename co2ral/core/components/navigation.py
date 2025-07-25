@@ -42,17 +42,14 @@ def get_navbar() -> dbc.Navbar:
     # Title Elements
     logo = html.A(
         [
-            DashIconify(icon="fluent:water-32-filled", width=32),
-            DashIconify(icon="mdi:periodic-table-carbon-dioxide", width=32),
-            DashIconify(icon="ic:baseline-model-training", width=32),
+            DashIconify(icon="game-icons:coral", width=32),
         ],
         href="/",
-        className="dash-git-logo",
         style={"position": "relative", "left": "10px"},
     )
 
     title = html.Div(["CO", html.Sub(2), "RAL"])
-    subtitle = html.A("A web UI for PyCO2", href=home_link, style=tx.subtitle)
+    subtitle = html.A("User Interface for Modeling Marine Carbon Systems", href=home_link, style=tx.subtitle)
     title_elements = dbc.Stack(
         [logo, dbc.NavbarBrand(dbc.Stack([title, subtitle]))],
         direction="horizontal",
