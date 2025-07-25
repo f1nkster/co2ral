@@ -68,4 +68,5 @@ Linux service is defined in /etc/systemd/system/co2ral.service
 How to check the status: ```sudo systemctl status co2ral```
 How to stop: ```sudo systemctl stop co2ral```
 How to start: ```sudo systemctl start co2ral```
+Show logs: ```sudo journalctl -u co2ral```
 
