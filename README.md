@@ -43,6 +43,13 @@
     * Gleichgewichtskonstanten
 * Future ideas- jmol integration
 
+18.07.2025
+* Reset Button
+* pH Wert als Parameter, DIC(pH, pCO)
+* Impressum der Uni direkt verlinken
+* mehr Datenpunkte
+
+
 # Deployment
 CO2RAL is using waitress for the WSGI app and nginx for the webserver.
 Linux service is defined in /etc/systemd/system/co2ral.service
