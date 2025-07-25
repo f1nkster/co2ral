@@ -96,6 +96,16 @@ def get_navbar() -> dbc.Navbar:
             )
         )
 
+    # add legal notice
+    nav_items.append(
+        dbc.NavItem(
+            dmc.NavLink(
+                label="Legal Notice",
+                href="https://www.chemiedidaktik.phil.fau.de/impressum/",
+                style=style,
+            ),
+        )
+    )
     dropdowns = dbc.Stack(nav_items, direction="horizontal", gap=3)
 
     panels = html.Div(

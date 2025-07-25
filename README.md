@@ -44,10 +44,10 @@
 * Future ideas- jmol integration
 
 18.07.2025
-* Reset Button
+* Reset Button (done)
 * pH Wert als Parameter, DIC(pH, pCO)
-* Impressum der Uni direkt verlinken
-* mehr Datenpunkte
+* Impressum der Uni direkt verlinken (done)
+* mehr Datenpunkte (done)
 
 
 # Deployment

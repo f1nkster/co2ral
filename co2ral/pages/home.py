@@ -1,37 +1,32 @@
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-import numpy as np
 import plotly.graph_objs as go
-import PyCO2SYS
 from core.components import selection as sel
+from core.utils.charts import create_line_chart
 from core.utils.layout import get_generic_layout, plot_cell
+from core.utils.marine_model import (
+    ALKALINITY,
+    CO3,
+    DIC,
+    HCO3,
+    PCO2,
+    PH,
+    SALINITY,
+    TEMPERATURE,
+    TOTAL_PHOSPHATE,
+    TOTAL_SILICATE,
+    MarineModel,
+)
 from dash import callback, html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
+from env.colors import DMC_LIME, DMC_RED
 
 
 (dash.register_page(__name__, path="/"),)
 
 cell_style: dict = {"min-height": "25vh"}
-
-salinity = 35
-temperature = 25
-total_silicate = 50
-total_phosphate = 2
-par1 = 2400
-kwargs = {
-    "par1": par1,  # Value of the first parameter
-    "par2": np.arange(2000, 3001, 250),  # Value of the second parameter, which is a long vector of different DIC's!
-    "par1_type": 1,  # The first parameter supplied is of type "1", which is "alkalinity"
-    "par2_type": 2,  # The second parameter supplied is of type "2", which is "DIC"
-    "salinity": salinity,  # Salinity of the sample
-    "temperature": temperature,  # Temperature at input conditions
-    "total_silicate": total_silicate,  # Concentration of silicate  in the sample (in umol/kg)
-    "total_phosphate": total_phosphate,  # Concentration of phosphate in the sample (in umol/kg)
-    "opt_k_carbonic": 4,  # Choice of H2CO3 and HCO3- dissociation constants K1 and K2 ("4" means "Mehrbach refit")
-    "opt_k_bisulfate": 1,  # Choice of HSO4- dissociation constants KSO4 ("1" means "Dickson")
-}
 
 
 def layout(**url_queries: dict) -> Component:
@@ -42,21 +37,24 @@ def layout(**url_queries: dict) -> Component:
     """
     content = []
 
+    ### Carbonate System Parameters
+    content.append(sel.badge("Carbonate System Parameters"))
+    par1 = ALKALINITY
     par1_slider = sel.range_slider(
         id="slider-par1",
-        name="Total Alkalinity",
-        sub_text="Unit: μmol/kg",
-        value=2400,
+        name=par1.label,
+        sub_text=f"Unit: {par1.unit}",
+        value=par1.default_value,
         min_val=2300,
         max_val=2500,
         step=10,
     )
-
-    content.append(sel.badge("Carbonate System Parameters"))
     content.append(par1_slider)
     content.append(dbc.Row(style={"height": "10px"}))
 
     content.append(dbc.Row(style={"height": "30px"}))
+
+    ### Hydrographic Conditions
     content.append(sel.badge("Hydrographic Conditions"))
 
     salinity_slider = sel.range_slider(
@@ -74,8 +72,9 @@ def layout(**url_queries: dict) -> Component:
     content.append(dbc.Row(style={"height": "10px"}))
 
     content.append(dbc.Row(style={"height": "30px"}))
-    content.append(sel.badge("Nutrients"))
 
+    ### Nutrients
+    content.append(sel.badge("Nutrients"))
     total_silicate_slider = sel.range_slider(
         id="slider-total-silicate",
         name="Total Silicate",
@@ -87,7 +86,6 @@ def layout(**url_queries: dict) -> Component:
     )
     content.append(total_silicate_slider)
     content.append(dbc.Row(style={"height": "10px"}))
-
     total_phosphate_slider = sel.range_slider(
         id="slider-total_phosphate",
         name="Total Phosphate",
@@ -100,11 +98,42 @@ def layout(**url_queries: dict) -> Component:
     content.append(total_phosphate_slider)
     content.append(dbc.Row(style={"height": "10px"}))
 
-    input_layout = sel.accordion_with_title(
-        "Controls",
-        dmc.Stack(content, align="stretch", gap="xs"),
-        icon="mdi:database-cog",
+    #  Apply and Reset Buttons
+    reset_button = sel.button(
+        "reset-btn",
+        "Reset",
+        "ix:reset",
+        color=DMC_RED,
     )
+    apply_button = sel.button(
+        "apply-btn",
+        "Apply",
+        "ph:play-duotone",
+        color=DMC_LIME,
+    )
+
+    buttons = dmc.Stack(
+        [
+            sel.badge("Action"),
+            dbc.Row(
+                [
+                    dbc.Col(reset_button, width=6),
+                    dbc.Col(apply_button, width=6),
+                ]
+            ),
+        ]
+    )
+    content.append(buttons)
+
+    input_layout = [
+        sel.accordion_with_title(
+            "Controls",
+            dmc.Stack(content, align="stretch", gap="xs"),
+            icon="mdi:database-cog",
+        ),
+        dbc.Row(html.Div(), className="g-1", style={"height": "18px"}),
+        # TODO: Add advanced settings
+    ]
 
     output_layout = dbc.Container(
         [
@@ -128,85 +157,76 @@ def layout(**url_queries: dict) -> Component:
 
 
 @callback(
-    [Output("line-chart", "children"), Output("line-chart-2", "children")],
     [
-        Input("slider-par1", "value"),
-        Input("slider-salinity", "value"),
-        Input("slider-temperature", "value"),
-        Input("slider-total-silicate", "value"),
-        Input("slider-total_phosphate", "value"),
+        Output("line-chart", "children"),
+        Output("line-chart-2", "children"),
+    ],
+    [Input("apply-btn", "n_clicks")],
+    [
+        State("slider-par1", "value"),
+        State("slider-salinity", "value"),
+        State("slider-temperature", "value"),
+        State("slider-total-silicate", "value"),
+        State("slider-total_phosphate", "value"),
     ],
 )
 def update_output(
-    value_par1: int, value_salinity: int, value_temperature: int, value_total_silicate: int, value_total_phosphate: int
+    n_clicks: int,
+    value_par1: int,
+    value_salinity: int,
+    value_temperature: int,
+    value_total_silicate: int,
+    value_total_phosphate: int,
 ) -> tuple[go.Figure, go.Figure]:
     """Updates the output
 
+    :param n_clicks: Number of button click
     :param value_par1: Value for parameter #1
     :param value_salinity: Value for salinity
     :param value_temperature: Value for salinity
     :param value_total_silicate: Value for total silicate
     :param value_total_phosphate: Value for total phosphate
-    :return: Test
+    :return: Figures
     """
-    kwargs["par1"] = value_par1
-    kwargs["salinity"] = value_salinity
-    kwargs["temperature"] = value_temperature
-    kwargs["total_silicate"] = value_total_silicate
-    kwargs["total_phosphate"] = value_total_phosphate
-
-    # Run CO2SYS!
-    results = PyCO2SYS.sys(**kwargs)
-
-    # ("par2", "pCO2", data=results, c="r", marker="o")
-
-    # Define the data for your line plot
-    x_values = results["par2"]
-    y_values = results["pCO2"]
-    y_values_2 = results["pH"]
-
-    co3 = results["CO3"]
-    hco3 = results["HCO3"]
-
-    fig = go.Figure(data=[go.Scatter(x=x_values, y=y_values)])
-    fig.update_layout(title="", xaxis_title="DIC [umol/kg]", yaxis_title="pCO2 [uatm]")
-
-    data = [{"x": x, "pCO2": y, "pH": y2} for (x, y, y2) in zip(x_values, y_values, y_values_2, strict=False)]
-    line_chart = dmc.LineChart(
-        h=300,
-        dataKey="x",
-        data=data,
-        series=[{"name": "pCO2", "color": "indigo.6"}, {"name": "pH", "color": "cyan.6", "yAxisId": "right"}],
-        curveType="natural",
-        tickLine="xy",
-        withXAxis=True,
-        withDots=True,
-        withLegend=True,
-        xAxisLabel="DIC [umol/kg]",
-        yAxisLabel="pCO2 [uatm]",
-        rightYAxisLabel="pH",
-        withRightYAxis=True,
+    # Init the model with the user input and run it
+    model = MarineModel(
+        value_par1=value_par1,
+        value_salinity=value_salinity,
+        value_temperature=value_temperature,
+        value_total_silicate=value_total_silicate,
+        value_total_phosphate=value_total_phosphate,
     )
+    results = model.run()
 
-    fig_2 = go.Figure(data=[go.Scatter(x=x_values, y=y_values_2)])
-    fig_2.update_layout(title="", xaxis_title="DIC [umol/kg]", yaxis_title="pH")
+    line_chart = create_line_chart(model_results=results, par_xaxis=DIC, par_yaxis_left=PCO2, par_yaxis_right=PH)
+    line_chart_2 = create_line_chart(model_results=results, par_xaxis=DIC, par_yaxis_left=CO3, par_yaxis_right=HCO3)
 
-    data_2 = [{"x": x, "CO3": y, "HCO3": y2} for (x, y, y2) in zip(x_values, co3, hco3, strict=False)]
-    line_chart_2 = dmc.LineChart(
-        h=300,
-        dataKey="x",
-        data=data_2,
-        series=[{"name": "CO3", "color": "indigo.6"}, {"name": "HCO3", "color": "cyan.6", "yAxisId": "right"}],
-        curveType="natural",
-        tickLine="xy",
-        withXAxis=True,
-        withDots=True,
-        withLegend=True,
-        xAxisLabel="DIC [μmol/kg]",
-        yAxisLabel="CO3 [μmol/kg]",
-        rightYAxisLabel="HCO3 [μmol/kg]",
-        withRightYAxis=True,
-    )
-
-    # return (line_chart, ), (html.Div(dcc.Graph(figure=fig_2)), )
     return (line_chart,), (line_chart_2,)
+
+
+@callback(
+    [
+        Output("slider-par1", "value"),
+        Output("slider-salinity", "value"),
+        Output("slider-temperature", "value"),
+        Output("slider-total-silicate", "value"),
+        Output("slider-total_phosphate", "value"),
+    ],
+    [Input("reset-btn", "n_clicks")],
+)
+def set_default_values(n_clicks: int) -> tuple:
+    """Reset the slider values to default parameters.
+
+    :param n_clicks: Number of button click
+    :return: Tuple of default values.
+    """
+    if n_clicks is None:
+        return
+
+    value_par1 = ALKALINITY.default_value
+    value_salinity = SALINITY.default_value
+    value_temperature = TEMPERATURE.default_value
+    value_total_silicate = TOTAL_SILICATE.default_value
+    value_total_phosphate = TOTAL_PHOSPHATE.default_value
+
+    return (value_par1, value_salinity, value_temperature, value_total_silicate, value_total_phosphate)
