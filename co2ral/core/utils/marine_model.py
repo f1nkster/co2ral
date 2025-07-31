@@ -11,6 +11,8 @@ class MarineModelParameter:
     unit: str
     type: int = -1
     default_value: float = -1.0
+    min_value: float = 0.0
+    max_value: float = 100.0
 
     def get_axis_label(self) -> str:
         """Get the axis label of this model parameter.
@@ -19,46 +21,115 @@ class MarineModelParameter:
         """
         return f"{self.label} [{self.unit}]" if self.unit else f"{self.label}"
 
+    def get_option(self) -> dict:
+        """Get the option for this model parameter.
+
+        :return: Dictionary with value and label.
+        """
+        return {"value": self.name, "label": self.label}
+
+
+@dataclass
+class MarineModelParameterCollection:
+    name: str
+    params: list[MarineModelParameter]
+
+    def get_param_by_name(self, name: str) -> MarineModelParameter | None:
+        """Get a parameter by its name.
+
+        :param name: Name of the parameter.
+        :return: MarineModelParameter if found, else None.
+        """
+        for param in self.params:
+            if param.name == name:
+                return param
+        return None
+
+    def get_option_list(self) -> list:
+        """Get a list of options for the parameters in this collection.
+
+        :return: List of dictionaries with value and label for each parameter.
+        """
+        option_list = []
+        for param in self.params:
+            option_list.append(param.get_option())
+
+        return option_list
+
+    @staticmethod
+    def get_collection_without_param(param: MarineModelParameter) -> "MarineModelParameterCollection":
+        """Get a collection without the given parameter.
+
+        :param param: The parameter to exclude.
+        :return: A new collection without the given parameter.
+        """
+        return MarineModelParameterCollection(
+            name=f"{param.name} (excluded)", params=[p for p in SYSTEM_PARAMS.params if p.name != param.name]
+        )
+
 
 ALKALINITY = MarineModelParameter(
-    name="alkalinity", label="Total Alkalinity", type=1, default_value=2400, unit="μmol/kg"
+    name="alkalinity",
+    label="Total Alkalinity",
+    type=1,
+    default_value=2500,
+    unit="μmol/kg",
+    min_value=1000,
+    max_value=5000,
 )
-DIC = MarineModelParameter(name="dic", label="DIC", type=2, default_value=2400, unit="μmol/kg")
-PH = MarineModelParameter(name="pH", label="pH", type=3, default_value=7, unit="-")
-PCO2 = MarineModelParameter(name="pCO2", label="pCO₂", type=4, default_value=-1, unit="μatm")  # tbd: default value
-# PCO2 = ModelParameter(name="pCO2", label="pCO2", type=4, default_value=-1, unit="μatm") # tbd: default value
+DIC = MarineModelParameter(
+    name="dic", label="DIC", type=2, default_value=1900, unit="μmol/kg", min_value=0, max_value=3000
+)
+PH = MarineModelParameter(name="pH", label="pH", type=3, default_value=7, unit="-", min_value=0.0, max_value=14.0)
+PCO2 = MarineModelParameter(
+    name="pCO2", label="pCO₂", type=4, default_value=420, unit="μatm", min_value=0, max_value=1000
+)
 
 
-SALINITY = MarineModelParameter(name="salinity", label="Practical Salinity", default_value=35, unit="-")
-TEMPERATURE = MarineModelParameter(name="temperature", label="Temperature", default_value=25, unit="°C")
-TOTAL_SILICATE = MarineModelParameter(name="total_silicate", label="Total Silicate", default_value=25, unit="μmol/kg")
+SYSTEM_PARAMS = MarineModelParameterCollection("Carbonate System Parameters", params=[ALKALINITY, DIC, PH, PCO2])
+
+
+SALINITY = MarineModelParameter(
+    name="salinity", label="Practical Salinity", default_value=30, unit="-", min_value=0, max_value=50
+)
+TEMPERATURE = MarineModelParameter(
+    name="temperature", label="Temperature", default_value=20, unit="°C", min_value=-2, max_value=30
+)
+TOTAL_SILICATE = MarineModelParameter(
+    name="total_silicate", label="Total Silicate", default_value=5, unit="μmol/kg", min_value=0.0, max_value=10.0
+)
 TOTAL_PHOSPHATE = MarineModelParameter(
-    name="total_phosphate", label="Total Phosphate", default_value=25, unit="μmol/kg"
+    name="total_phosphate", label="Total Phosphate", default_value=1.5, unit="μmol/kg", min_value=0.0, max_value=3.0
 )
 
-CO3 = MarineModelParameter(name="CO3", label="CO₃", unit="μmol/kg")
-HCO3 = MarineModelParameter(name="HCO3", label="HCO₃", unit="μmol/kg")
+CO3 = MarineModelParameter(name="CO3", label="CO₃²-", unit="μmol/kg")
+HCO3 = MarineModelParameter(name="HCO3", label="HCO₃-", unit="μmol/kg")
 
 
 class MarineModel:
     def __init__(
         self,
         value_par1: float,
+        type_par1: int,
+        type_par2: int,
+        min_value_par2: int,
+        max_value_par2: int,
+        number_of_steps: int,
         value_salinity: float,
         value_temperature: float,
         value_total_silicate: float,
         value_total_phosphate: float,
     ) -> None:
         self._par1 = value_par1
+        self._par1_type = type_par1
+        self._par2 = np.linspace(min_value_par2, max_value_par2, number_of_steps)
+        self._par2_type = type_par2
         self._salinity = value_salinity
         self._temperature = value_temperature
         self._total_silicate = value_total_silicate
         self._total_phosphate = value_total_phosphate
 
         # to be adapted to user input
-        self._par2 = np.arange(2000, 3001, 30)
-        self._par1_type = 1
-        self._par2_type = 2
         self._opt_k_carbonic = 4
         self._opt_k_bisulfate = 1
         pass

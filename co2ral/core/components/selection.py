@@ -16,7 +16,7 @@ def dropdown_with_title(
     title: str,
     id: Union[dict, str],
     description: Union[None, str] = None,
-    data: dict = {},
+    data: list = [],
     value: Union[None, list, str, int] = None,
     multi: bool = False,
     max_values: int = 5,
@@ -36,12 +36,11 @@ def dropdown_with_title(
     :param style: style of the dropdown component
     :return: Component
     """
-    data_list = [{"value": k, "label": v} for k, v in data.items()]
     if multi:
         component = dmc.MultiSelect(
             label=title,
             description=description,
-            data=data_list,
+            data=data,
             value=value,
             id=id,
             maxValues=max_values,
@@ -53,7 +52,7 @@ def dropdown_with_title(
         component = dmc.Select(
             label=title,
             description=description,
-            data=data_list,
+            data=data,
             value=value,
             id=id,
             searchable=True,
@@ -111,7 +110,7 @@ def accordion_with_title(
 
 
 def range_slider(
-    id: dict,
+    id: str,
     name: str,
     sub_text: Union[None, str] = None,
     value: list = [],
@@ -146,7 +145,7 @@ def range_slider(
 
     slider = html.Div(
         [
-            dmc.Text(name, style=te.component_text),
+            dmc.Text(name, style=te.component_text, id=f"{id}-title"),
             dmc.Text(sub_text, size="xs", style=te.component_subtext),
             dmc.Slider(
                 id=id,
