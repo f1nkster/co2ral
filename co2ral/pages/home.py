@@ -128,7 +128,7 @@ def update_output(
     value_temperature: int,
     value_total_silicate: int,
     value_total_phosphate: int,
-) -> list[go.Figure]:
+) -> tuple[list[go.Figure]]:
     """Updates the output
 
     :param n_clicks: Number of button click
@@ -148,7 +148,7 @@ def update_output(
     par1 = SYSTEM_PARAMS.get_param_by_name(selected_par1_name)
     par2 = SYSTEM_PARAMS.get_param_by_name(selected_par2_name)
     if par1 is None or par2 is None:
-        return [go.Figure("Not enough parameters selected")]
+        return (go.Figure("Not enough parameters selected"),)
 
     # Init the model with the user input and run it
     model = MarineModel(
@@ -178,7 +178,7 @@ def update_output(
             )
         )
 
-    return plots
+    return (plots,)
 
 
 @callback(
