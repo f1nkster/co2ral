@@ -56,16 +56,18 @@ class MarineModelParameterCollection:
 
         return option_list
 
-    @staticmethod
-    def get_collection_without_param(param: MarineModelParameter) -> "MarineModelParameterCollection":
-        """Get a collection without the given parameter.
+    def get_option_list_without_param(self, name: str | None) -> list:
+        """Get a list of options for the parameters in this collection, excluding the given parameter.
 
-        :param param: The parameter to exclude.
-        :return: A new collection without the given parameter.
+        :param name: Parameter to exclude.
+        :return: List of dictionaries with value and label for each parameter, excluding the given parameter.
         """
-        return MarineModelParameterCollection(
-            name=f"{param.name} (excluded)", params=[p for p in SYSTEM_PARAMS.params if p.name != param.name]
-        )
+        option_list = []
+        for p in self.params:
+            if p.name != name:
+                option_list.append(p.get_option())
+
+        return option_list
 
 
 ALKALINITY = MarineModelParameter(
@@ -102,8 +104,12 @@ TOTAL_PHOSPHATE = MarineModelParameter(
     name="total_phosphate", label="Total Phosphate", default_value=1.5, unit="μmol/kg", min_value=0.0, max_value=3.0
 )
 
-CO3 = MarineModelParameter(name="CO3", label="CO₃²-", unit="μmol/kg")
-HCO3 = MarineModelParameter(name="HCO3", label="HCO₃-", unit="μmol/kg")
+CO3 = MarineModelParameter(name="CO3", label="CO₃²⁻", unit="μmol/kg")
+HCO3 = MarineModelParameter(name="HCO3", label="HCO₃⁻", unit="μmol/kg")
+
+DIC_PARAMS = MarineModelParameterCollection("DIC Related Parameters", params=[CO3, HCO3])
+
+ALL_PARAMS = MarineModelParameterCollection("All Parameters", params=SYSTEM_PARAMS.params + DIC_PARAMS.params)
 
 
 class MarineModel:

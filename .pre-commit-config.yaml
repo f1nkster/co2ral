@@ -63,7 +63,6 @@ repos:
       name: Checking xml syntax
       description: Checking xml syntax
       entry: check-xml
-      language: python
       types: [xml]
       stages: [pre-commit]
 
@@ -94,7 +93,7 @@ repos:
     -   id: poetry-lock
         name: poetry-lock
         entry: poetry lock
-        language: python
+        language: system
         args: ["--no-update"]
         pass_filenames: false
         files: ^(.*/)?(poetry\.lock|pyproject\.toml)$

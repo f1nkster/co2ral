@@ -61,6 +61,17 @@
 * mehr Datenpunkte (done)
 
 
+22.09.2025
+* Single plots w/ one y-axis (done)
+* round to 2 digits (done)
+* Minus to Top for C03^2- (done)
+* Lokalisierung (2)
+* Exportfunktion der Graphen, CSV, Config (3)
+* Multiselect of Y-Axis Params (done)
+* Diskretisierungsteps limitiert (done)
+* Basic Settings (done)
+* Logo (done, but ugly)
+
 # Deployment
 CO2RAL is using waitress for the WSGI app and nginx for the webserver.
 Linux service is defined in /etc/systemd/system/co2ral.service
@@ -69,4 +80,3 @@ How to check the status: ```sudo systemctl status co2ral```
 How to stop: ```sudo systemctl stop co2ral```
 How to start: ```sudo systemctl start co2ral```
 Show logs: ```sudo journalctl -u co2ral```
-

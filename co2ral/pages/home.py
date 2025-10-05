@@ -3,13 +3,12 @@ import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 import plotly.graph_objs as go
 from core.components import selection as sel
+from core.components.settings import create_basic_settings
 from core.utils.charts import create_line_chart
 from core.utils.layout import get_generic_layout, plot_cell
 from core.utils.marine_model import (
     ALKALINITY,
-    CO3,
-    HCO3,
-    PH,
+    ALL_PARAMS,
     SALINITY,
     SYSTEM_PARAMS,
     TEMPERATURE,
@@ -20,7 +19,6 @@ from core.utils.marine_model import (
 from dash import callback, html
 from dash.dependencies import Input, Output, State
 from dash.development.base_component import Component
-from env.colors import DMC_LIME, DMC_RED
 
 
 (dash.register_page(__name__, path="/"),)
@@ -35,79 +33,6 @@ def layout(**url_queries: dict) -> Component:
     :return: Layout for the Overview page.
     """
     content = []
-
-    ### Carbonate System Parameters
-    content.append(sel.badge("Carbonate System Parameters"))
-
-    fixed_param_data = SYSTEM_PARAMS.get_option_list()
-    content.append(
-        sel.dropdown_with_title(
-            "Fixed Parameter",
-            id="par1-dd",
-            description="First parameter which is fixed to a single value for the marine model.",
-            data=fixed_param_data,
-        )
-    )
-
-    # par1 = ALKALINITY
-    # par1_slider = sel.range_slider(
-    #     id="slider-par1",
-    #     name=par1.label,
-    #     sub_text=f"Unit: {par1.unit}",
-    #     value=par1.default_value,
-    #     min_val=2300,
-    #     step=10,
-    #     max_val=2500,
-    # )
-    content.append(html.Div("", id="slider-par1-container"))
-    content.append(dbc.Row(style={"height": "10px"}))
-
-    content.append(
-        sel.dropdown_with_title(
-            "X-Axis Parameter", id="par2-dd", description="Second parameter representing the values for the x-axis."
-        )
-    )
-
-    par2_row = dbc.Row(
-        [
-            dbc.Col(
-                dmc.NumberInput(
-                    id="par2-min",
-                    label="Min Value",
-                    min=0,
-                    step=1,
-                    style={"width": "100%"},
-                ),
-                width=4,
-            ),
-            dbc.Col(
-                dmc.NumberInput(
-                    id="par2-max",
-                    label="Max Value",
-                    min=0,
-                    step=1,
-                    style={"width": "100%"},
-                ),
-                width=4,
-            ),
-            dbc.Col(
-                dmc.NumberInput(
-                    id="par2-steps",
-                    label="Discretization Steps",
-                    value=10,
-                    min=1,
-                    step=1,
-                    style={"width": "100%"},
-                ),
-                width=4,
-            ),
-        ],
-        className="g-1",
-    )
-
-    content.append(par2_row)
-
-    content.append(dbc.Row(style={"height": "30px"}))
 
     ### Hydrographic Conditions
     content.append(sel.badge("Hydrographic Conditions"))
@@ -153,36 +78,11 @@ def layout(**url_queries: dict) -> Component:
     content.append(total_phosphate_slider)
     content.append(dbc.Row(style={"height": "10px"}))
 
-    #  Apply and Reset Buttons
-    reset_button = sel.button(
-        "reset-btn",
-        "Reset",
-        "ix:reset",
-        color=DMC_RED,
-    )
-    apply_button = sel.button(
-        "apply-btn",
-        "Apply",
-        "ph:play-duotone",
-        color=DMC_LIME,
-    )
-
-    buttons = dmc.Stack(
-        [
-            sel.badge("Action"),
-            dbc.Row(
-                [
-                    dbc.Col(reset_button, width=6),
-                    dbc.Col(apply_button, width=6),
-                ]
-            ),
-        ]
-    )
-    content.append(buttons)
-
     input_layout = [
+        create_basic_settings(),
+        dbc.Row(html.Div(), className="g-1", style={"height": "18px"}),
         sel.accordion_with_title(
-            "Controls",
+            "Advanced Settings",
             dmc.Stack(content, align="stretch", gap="xs"),
             icon="mdi:database-cog",
         ),
@@ -190,31 +90,14 @@ def layout(**url_queries: dict) -> Component:
         # TODO: Add advanced settings
     ]
 
-    output_layout = dbc.Container(
-        [
-            dbc.Row(
-                [
-                    dbc.Col(plot_cell("Plot #1", html.Div(id="line-chart", style=cell_style)), width=12),
-                ],
-                className="g-1",
-            ),
-            dbc.Row(html.Div(), className="g-1", style={"height": "18px"}),
-            dbc.Row(
-                [
-                    dbc.Col(plot_cell("Plot #2", html.Div(id="line-chart-2", style=cell_style)), width=12),
-                ],
-                className="g-1",
-            ),
-        ],
-        fluid=True,
-    )
+    output_layout = dbc.Container(html.Div(id="plots-container"), style={"width": "100%"}, fluid=True)
+
     return get_generic_layout(input_layout, output_layout)
 
 
 @callback(
     [
-        Output("line-chart", "children"),
-        Output("line-chart-2", "children"),
+        Output("plots-container", "children"),
     ],
     [Input("apply-btn", "n_clicks")],
     [
@@ -224,6 +107,7 @@ def layout(**url_queries: dict) -> Component:
         State("par2-min", "value"),
         State("par2-max", "value"),
         State("par2-steps", "value"),
+        State("yaxis-multiselect", "value"),
         State("slider-salinity", "value"),
         State("slider-temperature", "value"),
         State("slider-total-silicate", "value"),
@@ -239,11 +123,12 @@ def update_output(
     par2_min_value: int,
     par2_max_value: int,
     par2_steps: int,
+    yaxis_names: list[str],
     value_salinity: int,
     value_temperature: int,
     value_total_silicate: int,
     value_total_phosphate: int,
-) -> tuple[go.Figure, go.Figure]:
+) -> list[go.Figure]:
     """Updates the output
 
     :param n_clicks: Number of button click
@@ -253,8 +138,9 @@ def update_output(
     :param par2_min_value: Minimum value for parameter
     :param par2_max_value: Maximum value for parameter
     :param par2_steps: Number of steps for parameter
+    :param yaxis_names: Names of the selected y-axis parameters
     :param value_salinity: Value for salinity
-    :param value_temperature: Value for salinity
+    :param value_temperature: Value for temperature
     :param value_total_silicate: Value for total silicate
     :param value_total_phosphate: Value for total phosphate
     :return: Figures
@@ -262,7 +148,7 @@ def update_output(
     par1 = SYSTEM_PARAMS.get_param_by_name(selected_par1_name)
     par2 = SYSTEM_PARAMS.get_param_by_name(selected_par2_name)
     if par1 is None or par2 is None:
-        return (html.Div("Parameter not found."), html.Div("Parameter not found."))
+        return [go.Figure("Not enough parameters selected")]
 
     # Init the model with the user input and run it
     model = MarineModel(
@@ -279,10 +165,20 @@ def update_output(
     )
     results = model.run()
 
-    line_chart = create_line_chart(model_results=results, par_xaxis=par2, par_yaxis_left=PH)
-    line_chart_2 = create_line_chart(model_results=results, par_xaxis=par2, par_yaxis_left=CO3, par_yaxis_right=HCO3)
+    plots = []
+    yaxis_params = [
+        ALL_PARAMS.get_param_by_name(name) for name in yaxis_names if ALL_PARAMS.get_param_by_name(name) is not None
+    ]
+    for yaxis_param in yaxis_params:
+        line_chart = create_line_chart(model_results=results, par_xaxis=par2, par_yaxis=yaxis_param)
+        plots.append(
+            plot_cell(
+                f"Plot for {yaxis_param.name}",
+                html.Div(id=f"line-chart-{yaxis_param.name}", style=cell_style, children=line_chart),
+            )
+        )
 
-    return (line_chart,), (line_chart_2,)
+    return plots
 
 
 @callback(
@@ -316,11 +212,26 @@ def update_par2_dropdown_options(selected_par1_name: str) -> html.Div:
     :param selected_par1_name: Name of the selected first parameter.
     :return: List of options for the second parameter.
     """
-    param = SYSTEM_PARAMS.get_param_by_name(selected_par1_name)
+    par2_params = SYSTEM_PARAMS.get_option_list_without_param(selected_par1_name)
 
-    par2_params = SYSTEM_PARAMS.get_collection_without_param(param)
+    return (par2_params if par2_params else [],)
 
-    return (par2_params.get_option_list() if param else [],)
+
+@callback(
+    [
+        Output("yaxis-multiselect", "data"),
+    ],
+    [
+        Input("par2-dd", "value"),
+    ],
+)
+def update_yaxis_multiselect_options(selected_par2_name: str) -> html.Div:
+    """Updates the options for the y-axis multi-select based on the second parameter.
+    :param selected_par2_name: Name of the selected second parameter.
+    :return: List of options for the y-axis multi-select.
+    """
+    yaxis_params = ALL_PARAMS.get_option_list_without_param(selected_par2_name)
+    return (yaxis_params if yaxis_params else [],)
 
 
 @callback(

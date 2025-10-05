@@ -3,4 +3,3 @@
 CLIENTSIDE = "clientside"
 SET_MANTINE_THEME = "set_mantine_theme"
 SET_BOOTSTRAP_THEME = "set_bootstrap_theme"
-TOGGLE_MAP_FULLSCREEN = "toggle_map_fullscreen"

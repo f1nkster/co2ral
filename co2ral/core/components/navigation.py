@@ -56,6 +56,20 @@ def get_navbar() -> dbc.Navbar:
         gap=4,
     )
 
+    # Logo from assets
+    logo_cd = html.A(
+        [
+            html.Img(
+                src="/assets/cropped-logo-chemiedidaktik.jpg",
+                height="40px",
+                style={"marginRight": "12px"},
+            )
+        ],
+        href="https://www.chemiedidaktik.phil.fau.de/",
+        style={"width": "auto", "right": "23px"},
+        className="ms-auto",
+    )
+
     # Theme Switching
     color_mode_switch = html.Div(
         [
@@ -117,7 +131,7 @@ def get_navbar() -> dbc.Navbar:
 
     return dbc.Navbar(
         id="main-nav",
-        children=[title_elements, panels, color_mode_switch, git_logo],
+        children=[title_elements, panels, logo_cd, color_mode_switch, git_logo],
         dark=True,
         color="#141B21",
         sticky="top",
