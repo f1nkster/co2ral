@@ -73,7 +73,7 @@ def layout(**url_queries: dict) -> Component:
     ],
     prevent_initial_call=True,
 )
-def update_output(
+def create_plots(
     n_clicks: int,
     selected_par1_name: str,
     value_par1: int,
@@ -88,7 +88,7 @@ def update_output(
     value_total_phosphate: int,
     lang: str = "de",
 ) -> tuple[list[go.Figure]]:
-    """Updates the output
+    """Creates the output plots based on the user inputs.
 
     :param n_clicks: Number of button click
     :param selected_par1_name: Name of the selected first parameter.
@@ -300,11 +300,12 @@ def update_par1_slider(selected_par1_name: str, lang: str) -> dmc.RangeSlider:
     min_val = param.min_value
     max_val = param.max_value
     step = 10 if param.unit == "μmol/kg" else 1
+    unit = TRANSLATION_DICT[lang]["unit"]
 
     return sel.range_slider(
         id="slider-par1",
         name=param.label[lang],
-        sub_text=f"Unit: {param.unit}",
+        sub_text=f"{unit}: {param.unit}",
         value=param.default_value,
         min_val=min_val,
         max_val=max_val,
