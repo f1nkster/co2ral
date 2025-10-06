@@ -21,8 +21,6 @@ def plot_cell(
     :param style: style for the overall cell container
     :return: html.Div containing cell title and plot
     """
-    download_id = f"{plot.id}_download"
-
     title_container = dmc.Badge(
         title,
         style={
@@ -32,18 +30,23 @@ def plot_cell(
             "justify-content": "space-between",
             "align-items": "center",
             "padding-right": "0px",
+            "textTransform": "none",
         },
         fullWidth=True,
         variant="dot",
         radius="sm",
         size="lg",
         color=colors.DMC_GRAY,
-        rightSection=dmc.ActionIcon(
-            children=DashIconify(icon="lucide:download"),
-            id=download_id,
-            color=colors.DMC_THEME,
-            variant="subtle",
-            size="lg",
+        rightSection=html.Button(
+            dmc.ActionIcon(
+                children=DashIconify(icon="lucide:download"),
+                color=colors.DMC_THEME,
+                variant="subtle",
+                size="lg",
+            ),
+            id={"type": "download-btn", "index": plot.id},
+            n_clicks=0,
+            style={"background": "none", "border": "none", "padding": 0, "cursor": "pointer"},
         ),
     )
 

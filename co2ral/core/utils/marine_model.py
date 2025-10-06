@@ -2,31 +2,34 @@ from dataclasses import dataclass
 
 import numpy as np
 import PyCO2SYS
+from locales.translation import TRANSLATION_DICT
 
 
 @dataclass
 class MarineModelParameter:
     name: str
-    label: str
+    label: dict[str, str]
     unit: str
     type: int = -1
     default_value: float = -1.0
     min_value: float = 0.0
     max_value: float = 100.0
 
-    def get_axis_label(self) -> str:
+    def get_axis_label(self, lang: str) -> str:
         """Get the axis label of this model parameter.
 
+        :param lang: Language for the label.
         :return: String representing the label.
         """
-        return f"{self.label} [{self.unit}]" if self.unit else f"{self.label}"
+        return f"{self.label[lang]} [{self.unit}]" if self.unit else f"{self.label[lang]}"
 
-    def get_option(self) -> dict:
+    def get_option(self, lang: str) -> dict:
         """Get the option for this model parameter.
 
+        :param lang: Language for the label.
         :return: Dictionary with value and label.
         """
-        return {"value": self.name, "label": self.label}
+        return {"value": self.name, "label": self.label[lang]}
 
 
 @dataclass
@@ -45,34 +48,36 @@ class MarineModelParameterCollection:
                 return param
         return None
 
-    def get_option_list(self) -> list:
+    def get_option_list(self, lang: str) -> list:
         """Get a list of options for the parameters in this collection.
 
+        :param lang: Language for the label.
         :return: List of dictionaries with value and label for each parameter.
         """
         option_list = []
         for param in self.params:
-            option_list.append(param.get_option())
+            option_list.append(param.get_option(lang=lang))
 
         return option_list
 
-    def get_option_list_without_param(self, name: str | None) -> list:
+    def get_option_list_without_param(self, name: str, lang: str) -> list:
         """Get a list of options for the parameters in this collection, excluding the given parameter.
 
         :param name: Parameter to exclude.
+        :param lang: Language for the label.
         :return: List of dictionaries with value and label for each parameter, excluding the given parameter.
         """
         option_list = []
         for p in self.params:
             if p.name != name:
-                option_list.append(p.get_option())
+                option_list.append(p.get_option(lang=lang))
 
         return option_list
 
 
 ALKALINITY = MarineModelParameter(
     name="alkalinity",
-    label="Total Alkalinity",
+    label={lang: TRANSLATION_DICT[lang]["total_alkalinity"] for lang in TRANSLATION_DICT},
     type=1,
     default_value=2500,
     unit="μmol/kg",
@@ -80,11 +85,19 @@ ALKALINITY = MarineModelParameter(
     max_value=5000,
 )
 DIC = MarineModelParameter(
-    name="dic", label="DIC", type=2, default_value=1900, unit="μmol/kg", min_value=0, max_value=3000
+    name="dic",
+    label={"en": "DIC", "de": "DIC"},
+    type=2,
+    default_value=1900,
+    unit="μmol/kg",
+    min_value=0,
+    max_value=3000,
 )
-PH = MarineModelParameter(name="pH", label="pH", type=3, default_value=7, unit="-", min_value=0.0, max_value=14.0)
+PH = MarineModelParameter(
+    name="pH", label={"en": "pH", "de": "pH"}, type=3, default_value=7, unit="-", min_value=0.0, max_value=14.0
+)
 PCO2 = MarineModelParameter(
-    name="pCO2", label="pCO₂", type=4, default_value=420, unit="μatm", min_value=0, max_value=1000
+    name="pCO2", label={"en": "pCO₂", "de": "pCO₂"}, type=4, default_value=420, unit="μatm", min_value=0, max_value=1000
 )
 
 
@@ -92,20 +105,40 @@ SYSTEM_PARAMS = MarineModelParameterCollection("Carbonate System Parameters", pa
 
 
 SALINITY = MarineModelParameter(
-    name="salinity", label="Practical Salinity", default_value=30, unit="-", min_value=0, max_value=50
+    name="salinity",
+    label={lang: TRANSLATION_DICT[lang]["practical_salinity"] for lang in TRANSLATION_DICT},
+    default_value=30,
+    unit="-",
+    min_value=0,
+    max_value=50,
 )
 TEMPERATURE = MarineModelParameter(
-    name="temperature", label="Temperature", default_value=20, unit="°C", min_value=-2, max_value=30
+    name="temperature",
+    label={lang: TRANSLATION_DICT[lang]["temperature"] for lang in TRANSLATION_DICT},
+    default_value=20,
+    unit="°C",
+    min_value=-2,
+    max_value=30,
 )
 TOTAL_SILICATE = MarineModelParameter(
-    name="total_silicate", label="Total Silicate", default_value=5, unit="μmol/kg", min_value=0.0, max_value=10.0
+    name="total_silicate",
+    label={lang: TRANSLATION_DICT[lang]["total_silicate"] for lang in TRANSLATION_DICT},
+    default_value=5,
+    unit="μmol/kg",
+    min_value=0.0,
+    max_value=10.0,
 )
 TOTAL_PHOSPHATE = MarineModelParameter(
-    name="total_phosphate", label="Total Phosphate", default_value=1.5, unit="μmol/kg", min_value=0.0, max_value=3.0
+    name="total_phosphate",
+    label={lang: TRANSLATION_DICT[lang]["total_phosphate"] for lang in TRANSLATION_DICT},
+    default_value=1.5,
+    unit="μmol/kg",
+    min_value=0.0,
+    max_value=3.0,
 )
 
-CO3 = MarineModelParameter(name="CO3", label="CO₃²⁻", unit="μmol/kg")
-HCO3 = MarineModelParameter(name="HCO3", label="HCO₃⁻", unit="μmol/kg")
+CO3 = MarineModelParameter(name="CO3", label={"en": "CO₃²⁻", "de": "CO₃²⁻"}, unit="μmol/kg")
+HCO3 = MarineModelParameter(name="HCO3", label={"en": "HCO₃⁻", "de": "HCO₃⁻"}, unit="μmol/kg")
 
 DIC_PARAMS = MarineModelParameterCollection("DIC Related Parameters", params=[CO3, HCO3])
 

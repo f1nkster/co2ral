@@ -4,7 +4,6 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 import env.colors as colors
-from core.components import navigation
 from dash import Dash, dcc, html
 
 
@@ -31,7 +30,8 @@ app.layout = dmc.MantineProvider(
     id="dmc-main",
     theme={"primaryColor": colors.DMC_THEME},
     children=[
-        navigation.get_navbar(),
+        # navigation.get_navbar(),
+        html.Div(id="navbar-container"),
         dcc.Location(id="url", refresh=False),
         html.Div(
             id="main-container",

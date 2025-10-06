@@ -9,6 +9,7 @@ from dash import Input, Output, callback, html
 from dash_iconify import DashIconify
 from env import component_ids as comp_ids
 from env import javascript_mapping as js
+from locales.translation import TRANSLATION_DICT
 
 
 _ignored_pages = ["404"]
@@ -25,18 +26,14 @@ page_content: dict[str, dict[str, Any]] = {
         "name": "Home",
         "label": "Home",
         "icon": "fluent:water-32-filled",
-    },
-    "contact": {
-        "name": "Contact",
-        "label": "Contact",
-        "icon": "fluent:water-32-filled",
-    },
+    }
 }
 
 
-def get_navbar() -> dbc.Navbar:
+def get_navbar(lang: str = "de") -> dbc.Navbar:
     """Get the component to display the main navigation.
 
+    :param lang: Language for the subtitle, either "de" or "en".
     :return: Main navigation Component which will be displayed by the browser.
     """
     # Title Elements
@@ -49,7 +46,7 @@ def get_navbar() -> dbc.Navbar:
     )
 
     title = html.Div(["CO", html.Sub(2), "RAL"])
-    subtitle = html.A("User Interface for Modeling Marine Carbon Systems", href=home_link, style=tx.subtitle)
+    subtitle = html.A(TRANSLATION_DICT[lang]["app_subtitle"], href=home_link, style=tx.subtitle, id="subtitle-id")
     title_elements = dbc.Stack(
         [logo, dbc.NavbarBrand(dbc.Stack([title, subtitle]))],
         direction="horizontal",
@@ -60,7 +57,7 @@ def get_navbar() -> dbc.Navbar:
     logo_cd = html.A(
         [
             html.Img(
-                src="/assets/cropped-logo-chemiedidaktik.jpg",
+                src="/assets/LogoChemieDidaktik.svg",
                 height="40px",
                 style={"marginRight": "12px"},
             )
@@ -114,7 +111,7 @@ def get_navbar() -> dbc.Navbar:
     nav_items.append(
         dbc.NavItem(
             dmc.NavLink(
-                label="Legal Notice",
+                label=TRANSLATION_DICT[lang]["imprint"],
                 href="https://www.chemiedidaktik.phil.fau.de/impressum/",
                 style=style,
             ),
@@ -126,12 +123,29 @@ def get_navbar() -> dbc.Navbar:
         id="navbar-dropdowns",
         className="g-0 ms-auto flex-nowrap mt-3 mt-md-0",
         children=dropdowns,
-        style={"width": "auto", "position": "absolute", "right": "160px"},
+        style={"width": "auto", "position": "absolute", "right": "240px"},
+    )
+
+    lang_switch = dmc.SegmentedControl(
+        id="lang-segmented",
+        data=[
+            {"label": "🇬🇧 EN", "value": "en"},
+            {"label": "🇩🇪 DE", "value": "de"},
+        ],
+        value=lang,
+        size="sm",
+        style={
+            "width": 120,
+            "marginRight": "16px",
+            "background": "#222",  # or your preferred color
+            "color": "#fff",  # text color
+            "border": "1px solid #444",  # border color
+        },
     )
 
     return dbc.Navbar(
         id="main-nav",
-        children=[title_elements, panels, logo_cd, color_mode_switch, git_logo],
+        children=[title_elements, panels, logo_cd, color_mode_switch, lang_switch, git_logo],
         dark=True,
         color="#141B21",
         sticky="top",
