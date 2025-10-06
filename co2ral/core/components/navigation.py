@@ -57,7 +57,7 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
     logo_cd = html.A(
         [
             html.Img(
-                src="/assets/LogoChemieDidaktik.svg",
+                src="/assets/LogoChemiedidaktik.svg",
                 height="40px",
                 style={"marginRight": "12px"},
             )
