@@ -6,4 +6,4 @@ if __name__ == "__main__":
     from app import app
 
     # Serve app
-    serve(app.server, host="131.188.75.244", port=80)
+    serve(app.server, host="127.0.0.1", port=8050)
