@@ -119,6 +119,7 @@ def range_slider(
     unit: str = "",
     step: Union[float, int] = 1,
     labels_as_int: bool = True,
+    info: Union[None, str] = None,
 ) -> html.Div:
     """Creates a range slider
 
@@ -131,6 +132,7 @@ def range_slider(
     :param unit: unit of measurement, defaults to ""
     :param step: step for slider, defaults to 1
     :param labels_as_int: labels as int or not, defaults to True
+    :param info: explanation text shown in a tooltip next to the title, defaults to None
     :return: range slider element
     """
     # Create Marks
@@ -143,9 +145,12 @@ def range_slider(
         rounded_marks = np.round(marks, decimals=2)
     labelled_marks = [{"value": i, "label": f"{i}{unit}"} for i in rounded_marks]
 
+    title = dmc.Text(name, style=te.component_text, id=f"{id}-title")
+    title_row = info_disclosure(title, info) if info else title
+
     slider = html.Div(
         [
-            dmc.Text(name, style=te.component_text, id=f"{id}-title"),
+            title_row,
             dmc.Text(sub_text, size="xs", style=te.component_subtext),
             dmc.Slider(
                 id=id,
@@ -155,11 +160,36 @@ def range_slider(
                 min=min_val,
                 max=max_val,
                 marks=labelled_marks,
+                labelAlwaysOn=True,
+                mt=28,
             ),
         ]
     )
 
     return slider
+
+
+def info_disclosure(title: Component, text: str) -> html.Details:
+    """Wraps a title into a native details/summary element with an info icon:
+       clicking the title or icon toggles the explanation text below.
+       Native disclosure is used instead of a hover tooltip so it also works on touch devices.
+
+    :param title: title component shown in the summary row
+    :param text: explanation text shown when expanded
+    :return: details element with title summary and explanation
+    """
+    return html.Details(
+        [
+            html.Summary(
+                dmc.Group(
+                    [title, DashIconify(icon="mdi:information-outline", width=16, color="#868e96")],
+                    gap=6,
+                ),
+                className="info-summary",
+            ),
+            dmc.Text(text, size="xs", c="dimmed", mt=2, mb=4),
+        ]
+    )
 
 
 def segmented_control(

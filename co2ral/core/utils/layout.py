@@ -13,12 +13,14 @@ def plot_cell(
     title: str,
     plot: Union[dash_echarts.DashECharts, dmc.Card],
     style: dict = {"width": "100%", "margin-bottom": "20px"},
+    subtitle: Union[None, str] = None,
 ) -> html.Div:
     """Creates a plot cell for given title and plot.
 
     :param title: cell title
     :param plot: cell plot
     :param style: style for the overall cell container
+    :param subtitle: context line with the fixed model conditions, shown above the plot
     :return: html.Div containing cell title and plot
     """
     title_container = dmc.Badge(
@@ -66,8 +68,13 @@ def plot_cell(
         ),
     )
 
+    card_children = []
+    if subtitle:
+        card_children.append(dmc.Text(subtitle, size="xs", c="dimmed", mb=6))
+    card_children.append(plot_with_spinner)
+
     plot_container = dmc.Card(
-        children=plot_with_spinner,
+        children=card_children,
         style={
             "overflow": "visible",
             "border-top-left-radius": "0px",

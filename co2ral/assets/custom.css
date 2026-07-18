@@ -605,3 +605,14 @@ textarea {
         height: 100%;
     }
 }
+
+/* Info disclosure (details/summary) for parameter explanations */
+.info-summary {
+    list-style: none;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.info-summary::-webkit-details-marker {
+    display: none;
+}

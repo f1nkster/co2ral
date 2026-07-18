@@ -3,45 +3,46 @@ import urllib.parse
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
-import plotly.graph_objs as go
 from core.components import navigation
-from core.components import selection as sel
 from core.components.advanced_settings import create_advanced_settings
-from core.components.basic_settings import create_basic_settings
+from core.components.basic_settings import create_basic_settings, create_par1_slider
 from core.utils.charts import create_line_chart, create_line_chart_figure
 from core.utils.layout import get_generic_layout, plot_cell
 from core.utils.marine_model import (
     ALKALINITY,
     ALL_PARAMS,
-    SALINITY,
     SYSTEM_PARAMS,
-    TEMPERATURE,
-    TOTAL_PHOSPHATE,
-    TOTAL_SILICATE,
     MarineModel,
+    MarineModelParameter,
 )
+from core.utils.settings import Settings
 from dash import ALL, Input, Output, State, callback, ctx, dcc, html
 from dash.development.base_component import Component
+from flask import request
 from locales.translation import TRANSLATION_DICT
 
 
-(dash.register_page(__name__, path="/"),)
+dash.register_page(__name__, path="/")
 
 cell_style: dict = {"min-height": "25vh"}
 
 
 def layout(**url_queries: dict) -> Component:
-    """Returns the layout for the Overview page.
+    """Returns the layout for the Overview page, initialized from the url query parameters.
 
-    :param url_queries: The url arguments.
+    :param url_queries: The url arguments, e.g. lang, par1, par1val, par2, min, max, steps, y, sal, temp, sil, phos.
     :return: Layout for the Overview page.
     """
     lang = url_queries.get("lang", "de")
+    if lang not in TRANSLATION_DICT:
+        lang = "de"
+    settings = Settings.from_query(url_queries)
 
     inputs = [
-        create_basic_settings(lang=lang),
+        dcc.Store(id="lang-store", data=lang),
+        create_basic_settings(lang=lang, settings=settings),
         dbc.Row(html.Div(), className="g-1", style={"height": "18px"}),
-        create_advanced_settings(lang=lang),
+        create_advanced_settings(lang=lang, settings=settings),
         dbc.Row(html.Div(), className="g-1", style={"height": "18px"}),
         dcc.Download(id="download-plot"),
     ]
@@ -52,11 +53,55 @@ def layout(**url_queries: dict) -> Component:
     return get_generic_layout(input_layout, output_layout)
 
 
+def _format_value_with_unit(value: float, unit: str) -> str:
+    """Formats a value with its unit, omitting placeholder units.
+
+    :param value: The value to format.
+    :param unit: The unit of the value, "-" for unitless parameters.
+    :return: Formatted string.
+    """
+    return f"{value} {unit}" if unit and unit != "-" else f"{value}"
+
+
+def _build_context_line(
+    par1: MarineModelParameter,
+    value_par1: float,
+    value_salinity: float,
+    value_temperature: float,
+    value_total_silicate: float,
+    value_total_phosphate: float,
+    lang: str,
+) -> str:
+    """Builds a one-line description of the fixed model conditions for plot subtitles and downloads.
+
+    :param par1: The fixed parameter.
+    :param value_par1: Value of the fixed parameter.
+    :param value_salinity: Value of salinity.
+    :param value_temperature: Value of temperature.
+    :param value_total_silicate: Value of total silicate.
+    :param value_total_phosphate: Value of total phosphate.
+    :param lang: Selected language.
+    :return: Context line, e.g. "Fest: Gesamtalkalität = 2500 μmol/kg · S = 30 · T = 20 °C · ...".
+    """
+    dictionary = TRANSLATION_DICT[lang]
+    parts = [
+        f"{dictionary['context_fixed']}: {par1.label[lang]} = {_format_value_with_unit(value_par1, par1.unit)}",
+        f"{dictionary['practical_salinity']} = {value_salinity}",
+        f"{dictionary['temperature']} = {value_temperature} °C",
+        f"{dictionary['total_silicate']} = {value_total_silicate} μmol/kg",
+        f"{dictionary['total_phosphate']} = {value_total_phosphate} μmol/kg",
+    ]
+    return " · ".join(parts)
+
+
 @callback(
     [
         Output("plots-container", "children"),
     ],
-    [Input("apply-btn", "n_clicks")],
+    [
+        Input("apply-btn", "n_clicks"),
+        Input("yaxis-multiselect", "value"),
+    ],
     [
         State("par1-dd", "value"),
         State("slider-par1", "value"),
@@ -64,51 +109,61 @@ def layout(**url_queries: dict) -> Component:
         State("par2-min", "value"),
         State("par2-max", "value"),
         State("par2-steps", "value"),
-        State("yaxis-multiselect", "value"),
         State("slider-salinity", "value"),
         State("slider-temperature", "value"),
         State("slider-total-silicate", "value"),
         State("slider-total_phosphate", "value"),
-        State("lang-segmented", "value"),
+        State("lang-store", "data"),
     ],
-    prevent_initial_call=True,
 )
 def create_plots(
     n_clicks: int,
-    selected_par1_name: str,
-    value_par1: int,
-    selected_par2_name: str,
-    par2_min_value: int,
-    par2_max_value: int,
-    par2_steps: int,
     yaxis_names: list[str],
-    value_salinity: int,
-    value_temperature: int,
-    value_total_silicate: int,
-    value_total_phosphate: int,
-    lang: str = "de",
-) -> tuple[list[go.Figure]]:
-    """Creates the output plots based on the user inputs.
+    selected_par1_name: str,
+    value_par1: float,
+    selected_par2_name: str,
+    par2_min_value: float,
+    par2_max_value: float,
+    par2_steps: int,
+    value_salinity: float,
+    value_temperature: float,
+    value_total_silicate: float,
+    value_total_phosphate: float,
+    lang: str,
+) -> tuple[list]:
+    """Creates the output plots based on the user inputs. Runs on page load and whenever
+       the apply button is clicked or the y-axis selection changes.
 
-    :param n_clicks: Number of button click
+    :param n_clicks: Number of button clicks.
+    :param yaxis_names: Names of the selected y-axis parameters.
     :param selected_par1_name: Name of the selected first parameter.
-    :param value_par1: Value for parameter #1
+    :param value_par1: Value for parameter #1.
     :param selected_par2_name: Name of the selected second parameter.
-    :param par2_min_value: Minimum value for parameter
-    :param par2_max_value: Maximum value for parameter
-    :param par2_steps: Number of steps for parameter
-    :param yaxis_names: Names of the selected y-axis parameters
-    :param value_salinity: Value for salinity
-    :param value_temperature: Value for temperature
-    :param value_total_silicate: Value for total silicate
-    :param value_total_phosphate: Value for total phosphate
+    :param par2_min_value: Minimum value for parameter #2.
+    :param par2_max_value: Maximum value for parameter #2.
+    :param par2_steps: Number of steps for parameter #2.
+    :param value_salinity: Value for salinity.
+    :param value_temperature: Value for temperature.
+    :param value_total_silicate: Value for total silicate.
+    :param value_total_phosphate: Value for total phosphate.
     :param lang: Selected language.
-    :return: List of go.Figures
+    :return: List of plot cells or a hint if the selection is incomplete.
     """
+    lang = lang if lang in TRANSLATION_DICT else "de"
+
+    if not yaxis_names:
+        hint = dmc.Alert(
+            TRANSLATION_DICT[lang]["no_yaxis_warning"],
+            color="yellow",
+            variant="light",
+            radius="md",
+        )
+        return ([hint],)
+
     par1 = SYSTEM_PARAMS.get_param_by_name(selected_par1_name)
     par2 = SYSTEM_PARAMS.get_param_by_name(selected_par2_name)
-    if par1 is None or par2 is None:
-        return ([go.Figure("Not enough parameters selected")],)
+    if par1 is None or par2 is None or None in (value_par1, par2_min_value, par2_max_value, par2_steps):
+        return (dash.no_update,)
 
     # Init the model with the user input and run it
     model = MarineModel(
@@ -125,6 +180,16 @@ def create_plots(
     )
     results = model.run()
 
+    context_line = _build_context_line(
+        par1=par1,
+        value_par1=value_par1,
+        value_salinity=value_salinity,
+        value_temperature=value_temperature,
+        value_total_silicate=value_total_silicate,
+        value_total_phosphate=value_total_phosphate,
+        lang=lang,
+    )
+
     plots = []
     yaxis_params = [
         ALL_PARAMS.get_param_by_name(name) for name in yaxis_names if ALL_PARAMS.get_param_by_name(name) is not None
@@ -135,6 +200,7 @@ def create_plots(
             plot_cell(
                 TRANSLATION_DICT[lang]["plot_title_prefix"] + yaxis_param.label[lang],
                 html.Div(id=f"line-chart-{yaxis_param.name}", style=cell_style, children=line_chart),
+                subtitle=context_line,
             )
         )
 
@@ -143,79 +209,68 @@ def create_plots(
 
 @callback(
     [
-        Output("par1-dd", "value"),
-    ],
-    [
-        Input("par1-dd", "data"),
-    ],
-)
-def update_par1_dropdown_value(par1_options: dict) -> html.Div:
-    """Updates the dropdown value for the first parameter.
-
-    :param par1_options: List of options for the first parameter.
-    :return: Name of the first parameter.
-    """
-    if par1_options:
-        return (par1_options[0]["value"],)
-
-
-@callback(
-    [
         Output("par2-dd", "data"),
+        Output("par2-dd", "value"),
     ],
     [
         Input("par1-dd", "value"),
     ],
-    [State("lang-segmented", "value")],
+    [
+        State("par2-dd", "value"),
+        State("lang-store", "data"),
+    ],
+    prevent_initial_call=True,
 )
-def update_par2_dropdown_options(selected_par1_name: str, lang: str) -> html.Div:
-    """Updates the dropdown value for the second parameter.
+def update_par2_dropdown(selected_par1_name: str, selected_par2_name: str, lang: str) -> tuple:
+    """Updates the options for the second parameter when the first parameter changes.
+       The current selection is kept if it is still valid.
 
     :param selected_par1_name: Name of the selected first parameter.
+    :param selected_par2_name: Name of the currently selected second parameter.
     :param lang: Selected language.
-    :return: List of options for the second parameter.
+    :return: Options and value for the second parameter.
     """
-    par2_params = SYSTEM_PARAMS.get_option_list_without_param(selected_par1_name, lang=lang)
+    lang = lang if lang in TRANSLATION_DICT else "de"
+    par2_options = SYSTEM_PARAMS.get_option_list_without_param(selected_par1_name, lang=lang)
 
-    return (par2_params if par2_params else [],)
+    if selected_par2_name and selected_par2_name != selected_par1_name:
+        return (par2_options, dash.no_update)
+
+    fallback = par2_options[0]["value"] if par2_options else None
+    return (par2_options, fallback)
 
 
 @callback(
     [
         Output("yaxis-multiselect", "data"),
+        Output("yaxis-multiselect", "value"),
     ],
     [
         Input("par2-dd", "value"),
     ],
-    [State("lang-segmented", "value")],
+    [
+        State("yaxis-multiselect", "value"),
+        State("lang-store", "data"),
+    ],
+    prevent_initial_call=True,
 )
-def update_yaxis_multiselect_options(selected_par2_name: str, lang: str) -> html.Div:
-    """Updates the options for the y-axis multi-select based on the second parameter.
+def update_yaxis_multiselect(selected_par2_name: str, selected_yaxis_names: list[str], lang: str) -> tuple:
+    """Updates the options for the y-axis multi-select when the second parameter changes.
+       Already selected parameters are kept unless they collide with the x-axis.
+
     :param selected_par2_name: Name of the selected second parameter.
+    :param selected_yaxis_names: Currently selected y-axis parameters.
     :param lang: Selected language.
-    :return: List of options for the y-axis multi-select.
+    :return: Options and value for the y-axis multi-select.
     """
-    yaxis_params = ALL_PARAMS.get_option_list_without_param(selected_par2_name, lang=lang)
-    return (yaxis_params if yaxis_params else [],)
+    lang = lang if lang in TRANSLATION_DICT else "de"
+    yaxis_options = ALL_PARAMS.get_option_list_without_param(selected_par2_name, lang=lang)
 
+    kept_names = [name for name in (selected_yaxis_names or []) if name != selected_par2_name]
+    if kept_names == (selected_yaxis_names or []):
+        return (yaxis_options, dash.no_update)
 
-@callback(
-    [
-        Output("par2-dd", "value"),
-    ],
-    [
-        Input("par2-dd", "data"),
-    ],
-)
-def update_par2_dropdown_value(par2_options: dict) -> html.Div:
-    """Updates the dropdown value for the second parameter.
-
-    :param par2_options: List of options for the second parameter.
-    :return: Name of the second parameter.
-    """
-    if par2_options:
-        param = SYSTEM_PARAMS.get_param_by_name(par2_options[0]["value"])
-        return (param.name,)
+    return (yaxis_options, kept_names)
 
 
 @callback(
@@ -227,90 +282,108 @@ def update_par2_dropdown_value(par2_options: dict) -> html.Div:
     [
         Input("par2-dd", "value"),
     ],
+    prevent_initial_call=True,
 )
-def update_par2_options(selected_par2_name: str) -> html.Div:
-    """Updates the options for the second parameter based on the first parameter.
+def update_par2_options(selected_par2_name: str) -> tuple:
+    """Resets the x-axis range to the parameter bounds when the second parameter changes.
+
     :param selected_par2_name: Name of the selected second parameter.
-    :return: List of options for the second parameter.
+    :return: Min value, max value and number of steps for the second parameter.
     """
     param = SYSTEM_PARAMS.get_param_by_name(selected_par2_name)
     if param is None:
-        return []
+        return (dash.no_update, dash.no_update, dash.no_update)
     return (param.min_value, param.max_value, 10)
-
-
-@callback(
-    [
-        Output("slider-par1", "value"),
-        Output("slider-salinity", "value"),
-        Output("slider-temperature", "value"),
-        Output("slider-total-silicate", "value"),
-        Output("slider-total_phosphate", "value"),
-    ],
-    [
-        Input("reset-btn", "n_clicks"),
-    ],
-    [
-        State("par1-dd", "value"),
-    ],
-    prevent_initial_call=True,
-)
-def set_default_values(n_clicks: int, selected_par1_name: str) -> tuple:
-    """Reset the slider values to default parameters.
-
-    :param n_clicks: Number of button click
-    :param selected_par1_name: Name of the selected first parameter.
-    :return: Tuple of default values.
-    """
-    if n_clicks is None:
-        return
-
-    param = SYSTEM_PARAMS.get_param_by_name(selected_par1_name)
-    if param is None:
-        # Fallback to ALKALINITY if not found
-        param = ALKALINITY
-
-    value_par1 = param.default_value
-    value_salinity = SALINITY.default_value
-    value_temperature = TEMPERATURE.default_value
-    value_total_silicate = TOTAL_SILICATE.default_value
-    value_total_phosphate = TOTAL_PHOSPHATE.default_value
-
-    return (value_par1, value_salinity, value_temperature, value_total_silicate, value_total_phosphate)
 
 
 @callback(
     Output("slider-par1-container", "children"),
     Input("par1-dd", "value"),
-    State("lang-segmented", "value"),
+    State("lang-store", "data"),
     prevent_initial_call=True,
 )
-def update_par1_slider(selected_par1_name: str, lang: str) -> dmc.RangeSlider:
-    """Updates the range slider for the first parameter based on the selected parameter.
+def update_par1_slider(selected_par1_name: str, lang: str) -> dmc.Slider:
+    """Rebuilds the slider for the first parameter when the selected parameter changes.
 
     :param selected_par1_name: Name of the selected first parameter.
     :param lang: Selected language.
-    :return: Range slider component for the first parameter.
+    :return: Slider component for the first parameter.
     """
+    lang = lang if lang in TRANSLATION_DICT else "de"
     param = SYSTEM_PARAMS.get_param_by_name(selected_par1_name)
     if param is None:
         # Fallback to ALKALINITY if not found
         param = ALKALINITY
 
-    min_val = param.min_value
-    max_val = param.max_value
-    step = 10 if param.unit == "μmol/kg" else 1
-    unit = TRANSLATION_DICT[lang]["unit"]
+    return create_par1_slider(param=param, value=param.default_value, lang=lang)
 
-    return sel.range_slider(
-        id="slider-par1",
-        name=param.label[lang],
-        sub_text=f"{unit}: {param.unit}",
-        value=param.default_value,
-        min_val=min_val,
-        max_val=max_val,
-        step=step,
+
+@callback(
+    Output("share-clipboard", "content"),
+    Input("share-clipboard", "n_clicks"),
+    [
+        State("par1-dd", "value"),
+        State("slider-par1", "value"),
+        State("par2-dd", "value"),
+        State("par2-min", "value"),
+        State("par2-max", "value"),
+        State("par2-steps", "value"),
+        State("yaxis-multiselect", "value"),
+        State("slider-salinity", "value"),
+        State("slider-temperature", "value"),
+        State("slider-total-silicate", "value"),
+        State("slider-total_phosphate", "value"),
+        State("lang-store", "data"),
+    ],
+    prevent_initial_call=True,
+)
+def build_share_link(
+    n_clicks: int,
+    selected_par1_name: str,
+    value_par1: float,
+    selected_par2_name: str,
+    par2_min_value: float,
+    par2_max_value: float,
+    par2_steps: int,
+    yaxis_names: list[str],
+    value_salinity: float,
+    value_temperature: float,
+    value_total_silicate: float,
+    value_total_phosphate: float,
+    lang: str,
+) -> str:
+    """Builds a shareable url containing the current settings; the clipboard component copies it.
+
+    :param n_clicks: Number of clicks on the clipboard icon.
+    :param selected_par1_name: Name of the selected first parameter.
+    :param value_par1: Value of the first parameter.
+    :param selected_par2_name: Name of the selected second parameter.
+    :param par2_min_value: Minimum value for the second parameter.
+    :param par2_max_value: Maximum value for the second parameter.
+    :param par2_steps: Number of steps for the second parameter.
+    :param yaxis_names: Names of the selected y-axis parameters.
+    :param value_salinity: Value of salinity.
+    :param value_temperature: Value of temperature.
+    :param value_total_silicate: Value of total silicate.
+    :param value_total_phosphate: Value of total phosphate.
+    :param lang: Selected language.
+    :return: Absolute url with all settings as query parameters.
+    """
+    settings = Settings(
+        par1_name=selected_par1_name,
+        par1_value=value_par1,
+        par2_name=selected_par2_name,
+        par2_min=par2_min_value,
+        par2_max=par2_max_value,
+        par2_steps=par2_steps,
+        yaxis_names=yaxis_names or [],
+        salinity=value_salinity,
+        temperature=value_temperature,
+        total_silicate=value_total_silicate,
+        total_phosphate=value_total_phosphate,
     )
+    host = request.host_url.rstrip("/")
+    return f"{host}/?{settings.to_query()}&lang={lang}"
 
 
 @callback(
@@ -327,26 +400,25 @@ def update_navbar(search: str) -> dbc.Navbar:
     query = search[1:] if search and search.startswith("?") else (search or "")
     url_query = dict(urllib.parse.parse_qsl(query))
     lang = url_query.get("lang", "de")
+    if lang not in TRANSLATION_DICT:
+        lang = "de"
 
     return navigation.get_navbar(lang=lang)
 
 
 @callback(
-    [
-        Output("url", "search"),
-        Output("subtitle-id", "children"),
-    ],
+    Output("subtitle-id", "children"),
     Input("lang-segmented", "value"),
     prevent_initial_call=True,
 )
-def localize_components_and_url(lang: str) -> tuple[str, str]:
-    """Update the url based on the selected language.
+def localize_subtitle(lang: str) -> str:
+    """Update the subtitle based on the selected language. The url itself is handled by the
+       clientside language callback, which reloads the page and keeps all other query parameters.
 
     :param lang: Selected language.
-    :return: Updated url search and subtitle.
+    :return: Updated subtitle.
     """
-    subtitle = TRANSLATION_DICT[lang]["app_subtitle"]
-    return f"?lang={lang}", subtitle
+    return TRANSLATION_DICT[lang]["app_subtitle"]
 
 
 dash.clientside_callback(
@@ -366,6 +438,44 @@ dash.clientside_callback(
 )
 
 
+# Applying a preset means navigating to its url: the option value is the full query string,
+# so the page reloads with all controls and plots initialized consistently.
+dash.clientside_callback(
+    """
+    function(value) {
+        if (value) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const lang = urlParams.get('lang') || 'de';
+            window.location.assign(window.location.pathname + '?' + value + '&lang=' + lang);
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("preset-dd", "data-dummy"),
+    Input("preset-dd", "value"),
+    prevent_initial_call=True,
+)
+
+
+# Reset navigates to the bare url (keeping only the language), so every control
+# returns to its default value and the default plot is rendered.
+dash.clientside_callback(
+    """
+    function(n_clicks) {
+        if (n_clicks) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const lang = urlParams.get('lang') || 'de';
+            window.location.assign(window.location.pathname + '?lang=' + lang);
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output("reset-btn", "data-dummy"),
+    Input("reset-btn", "n_clicks"),
+    prevent_initial_call=True,
+)
+
+
 @callback(
     Output("download-plot", "data"),
     Input({"type": "download-btn", "index": ALL}, "n_clicks"),
@@ -379,7 +489,7 @@ dash.clientside_callback(
     State("slider-temperature", "value"),
     State("slider-total-silicate", "value"),
     State("slider-total_phosphate", "value"),
-    State("lang-segmented", "value"),
+    State("lang-store", "data"),
     prevent_initial_call=True,
 )
 def download_plot(
@@ -394,7 +504,7 @@ def download_plot(
     value_temperature: float,
     value_total_silicate: float,
     value_total_phosphate: float,
-    lang: str = "de",
+    lang: str,
 ) -> dict:
     """Download the plot as a PNG file, based on the button clicked call the model
        and recreate the figure as go.Figures.
@@ -413,6 +523,7 @@ def download_plot(
     :param lang: Selected language.
     :return: Dict with content and filename for dcc.send_bytes.
     """
+    lang = lang if lang in TRANSLATION_DICT else "de"
     triggered = ctx.triggered_id
     if not triggered:
         return dash.no_update
@@ -449,8 +560,20 @@ def download_plot(
     if yaxis_param is None:
         return dash.no_update
 
+    context_line = _build_context_line(
+        par1=par1,
+        value_par1=value_par1,
+        value_salinity=value_salinity,
+        value_temperature=value_temperature,
+        value_total_silicate=value_total_silicate,
+        value_total_phosphate=value_total_phosphate,
+        lang=lang,
+    )
+
     # Recreate the figure
-    fig = create_line_chart_figure(model_results=results, par_xaxis=par2, par_yaxis=yaxis_param, lang=lang)
+    fig = create_line_chart_figure(
+        model_results=results, par_xaxis=par2, par_yaxis=yaxis_param, lang=lang, context_line=context_line
+    )
 
     img_bytes = fig.to_image(format="png")
     return dcc.send_bytes(img_bytes, filename=f"co2ral_{plot_id}.png")

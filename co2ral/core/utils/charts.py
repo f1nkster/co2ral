@@ -43,7 +43,11 @@ def create_line_chart(
 
 
 def create_line_chart_figure(
-    model_results: dict, par_xaxis: MarineModelParameter, par_yaxis: MarineModelParameter, lang: str = "de"
+    model_results: dict,
+    par_xaxis: MarineModelParameter,
+    par_yaxis: MarineModelParameter,
+    lang: str = "de",
+    context_line: str | None = None,
 ) -> go.Figure:
     """Creates a line chart figure for given model parameters.
 
@@ -51,6 +55,7 @@ def create_line_chart_figure(
     :param par_xaxis: Parameter for x axis.
     :param par_yaxis: Parameter for y axis.
     :param lang: Language for labels, defaults to "de"
+    :param context_line: Text describing the fixed model conditions, shown as figure title
     :return: Line chart figure as go.Figure.
     """
     x_values = np.round(model_results["par2"], 2)
@@ -71,6 +76,8 @@ def create_line_chart_figure(
         yaxis_title=par_yaxis.get_axis_label(lang=lang),
         height=300,
         legend={"orientation": "h"},
-        margin={"l": 40, "r": 20, "t": 40, "b": 40},
+        margin={"l": 40, "r": 20, "t": 60 if context_line else 40, "b": 40},
     )
+    if context_line:
+        fig.update_layout(title={"text": context_line, "font": {"size": 11}, "x": 0.5, "xanchor": "center"})
     return fig

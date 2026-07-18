@@ -7,18 +7,22 @@ from core.utils.marine_model import (
     TOTAL_PHOSPHATE,
     TOTAL_SILICATE,
 )
+from core.utils.settings import Settings
 from locales.translation import TRANSLATION_DICT
 
 
-def create_advanced_settings(lang: str = "de") -> dmc.Accordion:
+def create_advanced_settings(lang: str = "de", settings: Settings | None = None) -> dmc.Accordion:
     """Create the advanced settings accordion for the marine model.
 
     :param lang: Language for labels, either "de" or "en".
+    :param settings: Initial values for all controls; defaults are used if None.
     :return: The advanced settings accordion component.
     """
+    settings = settings or Settings()
+
     # Get all translations
     dictionary = TRANSLATION_DICT[lang]
-    unit = TRANSLATION_DICT[lang]["unit"]
+    unit = dictionary["unit"]
     content = []
 
     content.append(sel.badge(dictionary["x_axis_settings"]))
@@ -27,6 +31,7 @@ def create_advanced_settings(lang: str = "de") -> dmc.Accordion:
             dmc.NumberInput(
                 id="par2-min",
                 label=dictionary["x_min_label"],
+                value=settings.par2_min,
                 min=0,
                 step=1,
                 style={"width": "100%"},
@@ -34,6 +39,7 @@ def create_advanced_settings(lang: str = "de") -> dmc.Accordion:
             dmc.NumberInput(
                 id="par2-max",
                 label=dictionary["x_max_label"],
+                value=settings.par2_max,
                 min=0,
                 step=1,
                 style={"width": "100%"},
@@ -41,7 +47,7 @@ def create_advanced_settings(lang: str = "de") -> dmc.Accordion:
             dmc.NumberInput(
                 id="par2-steps",
                 label=dictionary["num_points"],
-                value=10,
+                value=settings.par2_steps,
                 min=1,
                 step=1,
                 max=25,
@@ -59,10 +65,11 @@ def create_advanced_settings(lang: str = "de") -> dmc.Accordion:
         id="slider-salinity",
         name=dictionary["practical_salinity"],
         sub_text=f"{unit}: {SALINITY.unit}",
-        value=SALINITY.default_value,
+        value=settings.salinity,
         min_val=SALINITY.min_value,
         max_val=SALINITY.max_value,
         step=1,
+        info=dictionary.get("expl_salinity"),
     )
     content.append(salinity_slider)
     content.append(dbc.Row(style={"height": "10px"}))
@@ -70,10 +77,11 @@ def create_advanced_settings(lang: str = "de") -> dmc.Accordion:
         id="slider-temperature",
         name=dictionary["temperature"],
         sub_text=f"{unit}: {TEMPERATURE.unit}",
-        value=TEMPERATURE.default_value,
+        value=settings.temperature,
         min_val=TEMPERATURE.min_value,
         max_val=TEMPERATURE.max_value,
         step=1,
+        info=dictionary.get("expl_temperature"),
     )
     content.append(temperature_slider)
     content.append(dbc.Row(style={"height": "40px"}))
@@ -84,10 +92,11 @@ def create_advanced_settings(lang: str = "de") -> dmc.Accordion:
         id="slider-total-silicate",
         name=dictionary["total_silicate"],
         sub_text=f"{unit}: μmol/kg",
-        value=TOTAL_SILICATE.default_value,
+        value=settings.total_silicate,
         min_val=TOTAL_SILICATE.min_value,
         max_val=TOTAL_SILICATE.max_value,
         step=1,
+        info=dictionary.get("expl_total_silicate"),
     )
     content.append(total_silicate_slider)
     content.append(dbc.Row(style={"height": "10px"}))
@@ -95,10 +104,11 @@ def create_advanced_settings(lang: str = "de") -> dmc.Accordion:
         id="slider-total_phosphate",
         name=dictionary["total_phosphate"],
         sub_text=f"{unit}: μmol/kg",
-        value=TOTAL_PHOSPHATE.default_value,
+        value=settings.total_phosphate,
         min_val=TOTAL_PHOSPHATE.min_value,
         max_val=TOTAL_PHOSPHATE.max_value,
         step=1,
+        info=dictionary.get("expl_total_phosphate"),
     )
     content.append(total_phosphate_slider)
 
