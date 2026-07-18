@@ -3,6 +3,8 @@ import urllib.parse
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
+import numpy as np
+import pandas as pd
 from core.components import navigation
 from core.components.advanced_settings import create_advanced_settings
 from core.components.basic_settings import create_basic_settings, create_par1_slider
@@ -45,6 +47,7 @@ def layout(**url_queries: dict) -> Component:
         create_advanced_settings(lang=lang, settings=settings),
         dbc.Row(html.Div(), className="g-1", style={"height": "18px"}),
         dcc.Download(id="download-plot"),
+        dcc.Download(id="download-csv"),
     ]
 
     input_layout = dbc.Container(html.Div(id="input-container", children=inputs), style={"width": "100%"}, fluid=True)
@@ -196,11 +199,14 @@ def create_plots(
     ]
     for yaxis_param in yaxis_params:
         line_chart = create_line_chart(model_results=results, par_xaxis=par2, par_yaxis=yaxis_param, lang=lang)
+        subtitle = context_line
+        if yaxis_param.name.startswith("saturation_"):
+            subtitle = f"{context_line} · {TRANSLATION_DICT[lang]['omega_hint']}"
         plots.append(
             plot_cell(
                 TRANSLATION_DICT[lang]["plot_title_prefix"] + yaxis_param.label[lang],
                 html.Div(id=f"line-chart-{yaxis_param.name}", style=cell_style, children=line_chart),
-                subtitle=context_line,
+                subtitle=subtitle,
             )
         )
 
@@ -384,6 +390,90 @@ def build_share_link(
     )
     host = request.host_url.rstrip("/")
     return f"{host}/?{settings.to_query()}&lang={lang}"
+
+
+@callback(
+    Output("download-csv", "data"),
+    Input("csv-btn", "n_clicks"),
+    [
+        State("par1-dd", "value"),
+        State("slider-par1", "value"),
+        State("par2-dd", "value"),
+        State("par2-min", "value"),
+        State("par2-max", "value"),
+        State("par2-steps", "value"),
+        State("slider-salinity", "value"),
+        State("slider-temperature", "value"),
+        State("slider-total-silicate", "value"),
+        State("slider-total_phosphate", "value"),
+        State("lang-store", "data"),
+    ],
+    prevent_initial_call=True,
+)
+def download_csv(
+    n_clicks: int,
+    selected_par1_name: str,
+    value_par1: float,
+    selected_par2_name: str,
+    par2_min_value: float,
+    par2_max_value: float,
+    par2_steps: int,
+    value_salinity: float,
+    value_temperature: float,
+    value_total_silicate: float,
+    value_total_phosphate: float,
+    lang: str,
+) -> dict:
+    """Runs the model with the current settings and downloads all results as a CSV file.
+       German locale uses semicolon separator and decimal comma so the file opens cleanly in Excel.
+
+    :param n_clicks: Number of clicks on the CSV button.
+    :param selected_par1_name: Name of the selected first parameter.
+    :param value_par1: Value of the first parameter.
+    :param selected_par2_name: Name of the selected second parameter.
+    :param par2_min_value: Minimum value for the second parameter.
+    :param par2_max_value: Maximum value for the second parameter.
+    :param par2_steps: Number of steps for the second parameter.
+    :param value_salinity: Value of salinity.
+    :param value_temperature: Value of temperature.
+    :param value_total_silicate: Value of total silicate.
+    :param value_total_phosphate: Value of total phosphate.
+    :param lang: Selected language.
+    :return: Dict for dcc.Download with the CSV content.
+    """
+    lang = lang if lang in TRANSLATION_DICT else "de"
+    par1 = SYSTEM_PARAMS.get_param_by_name(selected_par1_name)
+    par2 = SYSTEM_PARAMS.get_param_by_name(selected_par2_name)
+    if par1 is None or par2 is None or None in (value_par1, par2_min_value, par2_max_value, par2_steps):
+        return dash.no_update
+
+    model = MarineModel(
+        value_par1=value_par1,
+        type_par1=par1.type,
+        type_par2=par2.type,
+        min_value_par2=par2_min_value,
+        max_value_par2=par2_max_value,
+        number_of_steps=par2_steps,
+        value_salinity=value_salinity,
+        value_temperature=value_temperature,
+        value_total_silicate=value_total_silicate,
+        value_total_phosphate=value_total_phosphate,
+    )
+    results = model.run()
+
+    number_of_rows = len(np.atleast_1d(results["par2"]))
+    columns = {par2.get_axis_label(lang=lang): np.round(np.atleast_1d(results["par2"]), 4)}
+    for param in ALL_PARAMS.params:
+        if param.name == par2.name or param.name not in results:
+            continue
+        values = np.atleast_1d(results[param.name])
+        if len(values) == 1:
+            values = np.full(number_of_rows, values[0])
+        columns[param.get_axis_label(lang=lang)] = np.round(values, 4)
+
+    df = pd.DataFrame(columns)
+    separator, decimal = (";", ",") if lang == "de" else (",", ".")
+    return dcc.send_data_frame(df.to_csv, "co2ral_results.csv", sep=separator, decimal=decimal, index=False)
 
 
 @callback(

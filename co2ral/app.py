@@ -1,7 +1,6 @@
 import datetime
 
 import dash
-import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 import env.colors as colors
 from dash import Dash, dcc, html
@@ -9,15 +8,12 @@ from dash import Dash, dcc, html
 
 dash._dash_renderer._set_react_version("18.2.0")
 
+# All stylesheets are served locally from the assets folder (GDPR: no CDN or Google Fonts
+# requests): the Bootstrap Flatly theme and the self-hosted Lato font live in assets/,
+# which dash includes automatically. Mantine styles ship bundled with the component library.
 app = Dash(
     __name__,
-    external_stylesheets=[
-        dbc.themes.FLATLY,
-        dbc.icons.FONT_AWESOME,
-        dmc.styles.CAROUSEL,
-        dmc.styles.CHARTS,
-        "/assets/custom.css",
-    ],
+    meta_tags=[{"name": "viewport", "content": "width=device-width, initial-scale=1"}],
     use_pages=True,
 )
 

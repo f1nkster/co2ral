@@ -9,7 +9,8 @@ from core.utils.marine_model import (
 from core.utils.presets import get_preset_options
 from core.utils.settings import Settings
 from dash import dcc
-from env.colors import DMC_LIME, DMC_RED
+from dash_iconify import DashIconify
+from env.colors import DMC_GRAY, DMC_LIME, DMC_RED
 from locales.translation import TRANSLATION_DICT
 
 
@@ -134,19 +135,31 @@ def create_basic_settings(lang: str = "de", settings: Settings | None = None) ->
     )
     content.append(buttons)
 
-    # Share link row
+    # Share link and CSV download row
     content.append(
         dmc.Group(
             [
-                dmc.Text(dictionary["share_link"], size="sm", c="dimmed"),
-                dcc.Clipboard(
-                    id="share-clipboard",
-                    title=dictionary["share_link"],
-                    style={"fontSize": "18px", "cursor": "pointer"},
+                dmc.Button(
+                    dictionary["download_csv"],
+                    id="csv-btn",
+                    variant="subtle",
+                    size="compact-sm",
+                    color=DMC_GRAY,
+                    leftSection=DashIconify(icon="mdi:file-delimited-outline", width=16),
+                ),
+                dmc.Group(
+                    [
+                        dmc.Text(dictionary["share_link"], size="sm", c="dimmed"),
+                        dcc.Clipboard(
+                            id="share-clipboard",
+                            title=dictionary["share_link"],
+                            style={"fontSize": "18px", "cursor": "pointer"},
+                        ),
+                    ],
+                    gap="xs",
                 ),
             ],
-            gap="xs",
-            justify="flex-end",
+            justify="space-between",
             mt=8,
         )
     )

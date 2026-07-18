@@ -142,7 +142,17 @@ HCO3 = MarineModelParameter(name="HCO3", label={"en": "HCO₃⁻", "de": "HCO₃
 
 DIC_PARAMS = MarineModelParameterCollection("DIC Related Parameters", params=[CO3, HCO3])
 
-ALL_PARAMS = MarineModelParameterCollection("All Parameters", params=SYSTEM_PARAMS.params + DIC_PARAMS.params)
+# Saturation states straight from the PyCO2SYS results; the names match the result dict keys.
+OMEGA_ARAGONITE = MarineModelParameter(
+    name="saturation_aragonite", label={"en": "Ω Aragonite", "de": "Ω Aragonit"}, unit="-"
+)
+OMEGA_CALCITE = MarineModelParameter(name="saturation_calcite", label={"en": "Ω Calcite", "de": "Ω Calcit"}, unit="-")
+
+DERIVED_PARAMS = MarineModelParameterCollection("Derived Parameters", params=[OMEGA_ARAGONITE, OMEGA_CALCITE])
+
+ALL_PARAMS = MarineModelParameterCollection(
+    "All Parameters", params=SYSTEM_PARAMS.params + DIC_PARAMS.params + DERIVED_PARAMS.params
+)
 
 
 class MarineModel:

@@ -103,13 +103,16 @@ def get_generic_layout(
             dbc.Row(None, style={"height": "10px"}),
             dbc.Row(
                 [
+                    # Side by side on large screens, stacked (controls on top) on tablets and phones.
                     dbc.Col(
                         control_layout,
-                        width=3,
+                        xs=12,
+                        lg=3,
                     ),
                     dbc.Col(
                         output_layout,
-                        width=9,
+                        xs=12,
+                        lg=9,
                     ),
                 ],
             ),

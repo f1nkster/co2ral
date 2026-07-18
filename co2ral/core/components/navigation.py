@@ -33,7 +33,13 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
     )
 
     title = html.Div(["CO", html.Sub(2), "RAL"])
-    subtitle = html.A(TRANSLATION_DICT[lang]["app_subtitle"], href=home_link, style=tx.subtitle, id="subtitle-id")
+    subtitle = html.A(
+        TRANSLATION_DICT[lang]["app_subtitle"],
+        href=home_link,
+        style=tx.subtitle,
+        id="subtitle-id",
+        className="d-none d-md-block",
+    )
     title_elements = dbc.Stack(
         [logo, dbc.NavbarBrand(dbc.Stack([title, subtitle]))],
         direction="horizontal",
@@ -51,7 +57,7 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
         ],
         href="https://www.chemiedidaktik.phil.fau.de/",
         style={"width": "auto", "right": "23px"},
-        className="ms-auto",
+        className="ms-auto d-none d-md-block",
     )
 
     # Theme Switching
@@ -76,7 +82,7 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
     git_logo = html.A(
         [html.Img(src=f"data:image/png;base64,{git_icon}", height="32px")],
         href=ui_link,
-        className="dash-git-logo",
+        className="dash-git-logo d-none d-md-block",
         target="_blank",
         style={"position": "relative", "right": "5px"},
     )
@@ -108,7 +114,7 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
 
     panels = html.Div(
         id="navbar-dropdowns",
-        className="g-0 ms-auto flex-nowrap mt-3 mt-md-0",
+        className="g-0 ms-auto flex-nowrap mt-3 mt-md-0 d-none d-lg-block",
         children=dropdowns,
         style={"width": "auto", "position": "absolute", "right": "240px"},
     )

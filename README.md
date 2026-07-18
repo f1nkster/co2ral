@@ -10,11 +10,15 @@ for the [Chair of Chemistry Education at FAU](https://www.chemiedidaktik.phil.fa
 ## Features
 
 * Fix one carbonate system parameter (total alkalinity, DIC, pH or pCO₂) and vary a second
-  one over a range; plot any of the other parameters (incl. CO₃²⁻ and HCO₃⁻) against it
+  one over a range; plot any of the other parameters (incl. CO₃²⁻, HCO₃⁻ and the
+  aragonite/calcite saturation states Ω with a reference line at Ω = 1) against it
 * Didactic scenario presets (ocean acidification, coral reef, North Sea, Baltic Sea)
 * Shareable urls: all settings are encoded as query parameters (copy via the share icon)
 * Localized in German and English (`?lang=de` / `?lang=en`)
-* Download plots as PNG including the fixed model conditions
+* Download plots as PNG including the fixed model conditions, or all results as CSV
+  (German locale: semicolon separator and decimal comma for Excel)
+* Responsive layout for tablets and phones
+* All stylesheets and fonts are served locally (no CDN or Google Fonts requests)
 
 ## Development
 
@@ -35,10 +39,12 @@ poetry run ruff format --check co2ral tests
 
 ## Open Points
 
-* Download values as csv
 * Nutrients to add: Ammonia: 0 - 1
 * Live plot updates on slider changes (debounced)
-* Aragonite/calcite saturation as plottable parameters
+* Bjerrum plot (carbonate speciation vs. pH)
+* Selectable dissociation constants (opt_k_carbonic)
+* Privacy: DashIconify loads icons from api.iconify.design at runtime; replace with
+  bundled icons for a fully CDN-free page
 
 # Deployment
 

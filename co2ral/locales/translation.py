@@ -30,8 +30,10 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "scenarios": "Scenarios",
         "scenario_placeholder": "Choose a scenario …",
         "share_link": "Copy chart link",
+        "download_csv": "Download data as CSV",
         "no_yaxis_warning": "Please select at least one y-axis parameter to create plots.",
         "context_fixed": "Fixed",
+        "omega_hint": "Ω > 1: calcification possible · Ω < 1: calcium carbonate dissolves",
         "expl_alkalinity": (
             "Total alkalinity describes the seawater's capacity to neutralize acids (buffering capacity). "
             "It increases e.g. through weathering of carbonate rock."
@@ -93,8 +95,10 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "scenarios": "Szenarien",
         "scenario_placeholder": "Szenario auswählen …",
         "share_link": "Diagramm-Link kopieren",
+        "download_csv": "Daten als CSV herunterladen",
         "no_yaxis_warning": "Bitte wähle mindestens einen Y-Achsen-Parameter aus, um Diagramme zu erstellen.",
         "context_fixed": "Fest",
+        "omega_hint": "Ω > 1: Kalkbildung möglich · Ω < 1: Kalk löst sich auf",
         "expl_alkalinity": (
             "Die Gesamtalkalität beschreibt die Fähigkeit des Meerwassers, Säuren zu neutralisieren "
             "(Puffervermögen). Sie steigt z. B. durch Verwitterung von Kalkgestein."

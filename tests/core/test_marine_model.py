@@ -118,3 +118,16 @@ def test__marine_model_run__plausible_seawater_values():
 
     assert np.all(results["pH"] > 7.0)
     assert np.all(results["pH"] < 9.0)
+
+
+def test__marine_model_run__saturation_decreases_with_rising_dic():
+    """GIVEN a model with a fixed alkalinity and a rising DIC range
+    WHEN the model is run
+    THEN the aragonite and calcite saturation states strictly decrease (ocean acidification)
+    """
+    results = _run_default_model()
+
+    assert np.all(np.diff(results["saturation_aragonite"]) < 0)
+    assert np.all(np.diff(results["saturation_calcite"]) < 0)
+    # Calcite is the more stable mineral, so its saturation is always higher than aragonite's.
+    assert np.all(results["saturation_calcite"] > results["saturation_aragonite"])

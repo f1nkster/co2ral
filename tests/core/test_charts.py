@@ -1,6 +1,6 @@
 import numpy as np
 from core.utils.charts import create_line_chart, create_line_chart_figure
-from core.utils.marine_model import DIC, PH
+from core.utils.marine_model import DIC, OMEGA_ARAGONITE, PCO2, PH
 
 
 def _fake_results() -> dict:
@@ -33,6 +33,21 @@ def test__create_line_chart__contains_all_data_points():
     assert len(chart.data) == 5
     assert chart.data[0]["x"] == 1800
     assert chart.data[0][PH.label["de"]] == 8.4
+
+
+def test__create_line_chart__saturation_param_gets_omega_reference_line():
+    """GIVEN a saturation state as y-axis parameter
+    WHEN the line chart is created
+    THEN a reference line at Ω = 1 is added, while other parameters get none
+    """
+    results = {"par2": np.linspace(280, 1000, 5), "saturation_aragonite": np.linspace(3.5, 1.2, 5)}
+
+    omega_chart = create_line_chart(model_results=results, par_xaxis=PCO2, par_yaxis=OMEGA_ARAGONITE, lang="de")
+    ph_chart = create_line_chart(model_results=_fake_results(), par_xaxis=DIC, par_yaxis=PH, lang="de")
+
+    assert len(omega_chart.referenceLines) == 1
+    assert omega_chart.referenceLines[0]["y"] == 1
+    assert ph_chart.referenceLines == []
 
 
 def test__create_line_chart_figure__sets_context_line_as_title():
