@@ -1,33 +1,20 @@
-from typing import Any
-
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from core.components.styles import text_elements as tx
 from core.utils.images import get_base64_image
-from dash import Input, Output, callback, html
+from dash import Input, Output, html
 from dash_iconify import DashIconify
 from env import component_ids as comp_ids
 from env import javascript_mapping as js
 from locales.translation import TRANSLATION_DICT
 
 
-_ignored_pages = ["404"]
-
 git_icon = get_base64_image("github.png")
 dashboard_icon = get_base64_image("logo.png")
 
 home_link = "/"
-ui_link = "https://github.com/pfheiter/"
-
-
-page_content: dict[str, dict[str, Any]] = {
-    "home": {
-        "name": "Home",
-        "label": "Home",
-        "icon": "fluent:water-32-filled",
-    }
-}
+ui_link = "https://github.com/f1nkster/co2ral"
 
 
 def get_navbar(lang: str = "de") -> dbc.Navbar:
@@ -155,93 +142,6 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
             "height": "50px",
             "zIndex": "100",
         },
-    )
-
-
-@callback(
-    [
-        [Output(i, "style") for i in list(dash.page_registry.values())],
-    ],
-    [
-        Input("url", "search"),
-        Input("url", "pathname"),
-    ],
-    disable_cache=True,
-)
-def update_nav_bar(search: str, pathname: str) -> tuple:
-    """Update the navigation bar based on the url.
-
-    :param search: Current url search, after the ?, e.g., ?par1=alkalinity.
-    :param pathname: Current url pathname, after the slash /, e.g., /home.
-    :return: List of navigation items to be displayed in the sub navigation.
-    """
-    path_list = pathname.split("/")
-    default_dd_style = {"color": "white"}
-    active_dd_style = {"color": "#19d83b", "font-weight": "bold", "transition": "all 0.3s ease"}
-    nav_items = []
-    # All sub-pages begin with /, so provide empty navigation, if we're on the landing page.
-    if pathname != "/":
-        # Ensure, that there is a path with a /
-        if len(path_list) > 1:
-            # set top level for streams or admin
-            if len(path_list) > 3:
-                root_level, top_level = path_list[1], path_list[2]
-            else:
-                root_level, top_level = path_list[0], path_list[1]
-            top_name = page_content[root_level]["children"][top_level]["name"]
-            top_icon = page_content[root_level]["children"][top_level]["icon"]
-            nav_items.append(
-                dbc.NavItem(
-                    dmc.NavLink(
-                        label=top_name,
-                        leftSection=DashIconify(icon=top_icon, height=16),
-                        rightSection=DashIconify(icon="tabler-chevron-right", height=16),
-                        style={"height": "30px"},
-                    ),
-                )
-            )
-            for page in dash.page_registry.values():
-                if (
-                    top_level in page["relative_path"]
-                    # and page["relative_path"].count("/") > 2
-                    and ("hide" not in page or page["hide"] is False)
-                ):
-                    active = True if pathname == page["relative_path"] else False
-                    style = (
-                        {"height": "30px", "font-weight": "bold", "transition": "all 0.1s ease"}
-                        if active
-                        else {"height": "30px"}
-                    )
-                    if page["name"] in _ignored_pages:
-                        continue
-                    if page["name"] == "Documentation":
-                        nav_items.append(
-                            dbc.NavItem(
-                                dmc.NavLink(
-                                    label=page["name"],
-                                    href=page["relative_path"],
-                                    active=active,
-                                    style=style,
-                                ),
-                                className="ms-auto",
-                            )
-                        )
-                    else:
-                        nav_items.append(
-                            dbc.NavItem(
-                                dmc.NavLink(
-                                    label=f"{page['name']}",
-                                    href=page["relative_path"] + search,
-                                    style=style,
-                                    active=active,
-                                ),
-                            )
-                        )
-    dd_active = [(i in path_list) for i in list(page_content.keys())]
-    dd_styles = [active_dd_style if i else default_dd_style for i in dd_active]
-    return (
-        nav_items,
-        dd_styles,
     )
 
 

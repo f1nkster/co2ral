@@ -2,6 +2,8 @@ import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from core.components import selection as sel
 from core.utils.marine_model import (
+    SALINITY,
+    TEMPERATURE,
     TOTAL_PHOSPHATE,
     TOTAL_SILICATE,
 )
@@ -56,10 +58,10 @@ def create_advanced_settings(lang: str = "de") -> dmc.Accordion:
     salinity_slider = sel.range_slider(
         id="slider-salinity",
         name=dictionary["practical_salinity"],
-        sub_text=f"{unit}: -",
-        value=35,
-        min_val=10,
-        max_val=50,
+        sub_text=f"{unit}: {SALINITY.unit}",
+        value=SALINITY.default_value,
+        min_val=SALINITY.min_value,
+        max_val=SALINITY.max_value,
         step=1,
     )
     content.append(salinity_slider)
@@ -67,10 +69,10 @@ def create_advanced_settings(lang: str = "de") -> dmc.Accordion:
     temperature_slider = sel.range_slider(
         id="slider-temperature",
         name=dictionary["temperature"],
-        sub_text=f"{unit}: °C",
-        value=25,
-        min_val=5,
-        max_val=40,
+        sub_text=f"{unit}: {TEMPERATURE.unit}",
+        value=TEMPERATURE.default_value,
+        min_val=TEMPERATURE.min_value,
+        max_val=TEMPERATURE.max_value,
         step=1,
     )
     content.append(temperature_slider)

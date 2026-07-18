@@ -18,7 +18,6 @@ app = Dash(
         dmc.styles.CHARTS,
         "/assets/custom.css",
     ],
-    external_scripts=["/assets/script.js"],
     use_pages=True,
 )
 
