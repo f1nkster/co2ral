@@ -46,29 +46,3 @@ poetry run ruff format --check co2ral tests
 * Privacy: DashIconify loads icons from api.iconify.design at runtime; replace with
   bundled icons for a fully CDN-free page
 
-# Deployment
-
-CO2RAL is using waitress for the WSGI app and nginx for the webserver.
-Linux service is defined in /etc/systemd/system/co2ral.service
-
-How to check the status: ```sudo systemctl status co2ral```
-How to stop: ```sudo systemctl stop co2ral```
-How to start: ```sudo systemctl start co2ral```
-Show logs: ```sudo journalctl -u co2ral```
-
-Deploy a new version:
-
-```bash
-cd /home/heiter/co2ral
-sudo -u heiter git pull
-sudo systemctl restart co2ral
-```
-
-# Certificates for SSL
-
-Mainly, we are using certbot for that:
-```
-sudo apt update
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d co2ral.de -d www.co2ral.de
-```
