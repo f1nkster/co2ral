@@ -37,6 +37,10 @@ def create_line_chart(
         withLegend=True,
         xAxisLabel=par_xaxis.get_axis_label(lang=lang),
         yAxisLabel=par_yaxis.get_axis_label(lang=lang),
+        # Scale both axes to the data range instead of starting at zero,
+        # so small but meaningful changes (e.g. pH 8.3 -> 7.8) become clearly visible.
+        xAxisProps={"type": "number", "domain": ["auto", "auto"]},
+        yAxisProps={"domain": ["auto", "auto"]},
     )
 
     return line_chart
