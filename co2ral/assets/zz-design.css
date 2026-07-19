@@ -1,0 +1,318 @@
+/* =====================================================================
+   Design layer, derived from the Claude Design project "UI für co2ral.de"
+   (CO2ral Dashboard.dc.html).
+
+   Everything visual from that design lives in this one file, so the whole
+   restyle can be removed again by deleting it — the app keeps working with
+   its previous look. Loaded last (filename sorts after custom.css), so it
+   overrides the earlier stylesheets.
+
+   The design fetched its fonts from Google Fonts; they are self-hosted here
+   instead (02-design-fonts.css), because the app makes no external requests.
+   ===================================================================== */
+
+:root {
+    --ds-bg: #f3f5f1;
+    --ds-surface: #ffffff;
+    --ds-surface-soft: #f8fafc;
+    --ds-border: #e2e8f0;
+    --ds-border-soft: #eef2f7;
+    --ds-text: #1e293b;
+    --ds-muted: #64748b;
+    --ds-faint: #94a3b8;
+
+    --ds-accent: #4d7c0f;
+    --ds-accent-hover: #3f6a0c;
+    --ds-accent-bright: #65a30d;
+
+    --ds-rail: #1e293b;
+    --ds-rail-border: #334155;
+    --ds-rail-text: #cbd5e1;
+    --ds-rail-label: #64748b;
+
+    --ds-radius-card: 14px;
+    --ds-radius-tile: 11px;
+
+    --ds-font-display: 'Space Grotesk', system-ui, sans-serif;
+    --ds-font-body: 'IBM Plex Sans', system-ui, sans-serif;
+    --ds-font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+/* The design is a light design; these are the matching dark counterparts, so the
+   existing theme switch keeps working. */
+[data-bs-theme="dark"] {
+    --ds-bg: #131a24;
+    --ds-surface: #1b2430;
+    --ds-surface-soft: #223042;
+    --ds-border: #2c3a4d;
+    --ds-border-soft: #263345;
+    --ds-text: #e8edf4;
+    --ds-muted: #9fb0c4;
+    --ds-faint: #7d8ea3;
+    --ds-accent: #a3c65a;
+    --ds-accent-hover: #b7d472;
+    --ds-accent-bright: #a3c65a;
+}
+
+/* Mantine's palette, shifted to the design's olive green without touching the component
+   definitions in python. The doubled :root raises specificity above Mantine's own :root
+   block, whose stylesheet is injected after the asset files. */
+:root:root {
+    --mantine-primary-color-filled: var(--ds-accent);
+    --mantine-primary-color-filled-hover: var(--ds-accent-hover);
+    --mantine-primary-color-light-color: var(--ds-accent);
+    --mantine-primary-color-light-hover: rgba(77, 124, 15, 0.14);
+    --mantine-primary-color-light: rgba(77, 124, 15, 0.1);
+    --mantine-color-anchor: var(--ds-accent);
+
+    /* The design works with a single accent. Components that ask for teal by name are
+       remapped here rather than in python, so the restyle stays inside this file. */
+    --mantine-color-teal-filled: var(--ds-accent);
+    --mantine-color-teal-filled-hover: var(--ds-accent-hover);
+    --mantine-color-teal-light: rgba(77, 124, 15, 0.1);
+    --mantine-color-teal-light-hover: rgba(77, 124, 15, 0.16);
+    --mantine-color-teal-light-color: var(--ds-accent);
+    --mantine-color-teal-outline: var(--ds-accent);
+    --mantine-color-teal-outline-hover: rgba(77, 124, 15, 0.1);
+}
+
+:root:root[data-bs-theme="dark"] {
+    --mantine-color-teal-light: rgba(163, 198, 90, 0.14);
+    --mantine-color-teal-light-hover: rgba(163, 198, 90, 0.22);
+    --mantine-color-teal-light-color: var(--ds-accent);
+}
+
+/* ---------- base ---------- */
+
+body {
+    font-family: var(--ds-font-body);
+    background: var(--ds-bg);
+    color: var(--ds-text);
+}
+
+#main-container {
+    background: var(--ds-bg);
+    border-top: none;
+}
+
+a {
+    color: var(--ds-accent);
+}
+
+a:hover {
+    color: var(--ds-accent-hover);
+}
+
+/* ---------- header ---------- */
+
+/* The design uses a light header with dark type; the inline colours coming from
+   the dark navbar variant have to be overridden explicitly. */
+#main-nav {
+    background: var(--ds-surface) !important;
+    border-bottom: 1px solid var(--ds-border);
+    height: auto !important;
+    min-height: 54px;
+    padding: 6px 10px;
+}
+
+#main-nav .navbar-brand,
+#main-nav .navbar-brand * {
+    color: var(--ds-text) !important;
+}
+
+#main-nav .navbar-brand > .hstack > div:first-child {
+    font-family: var(--ds-font-display);
+    font-size: 21px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+#main-nav #subtitle-id,
+#main-nav #subtitle-id:hover {
+    color: var(--ds-muted) !important;
+    font-size: 12px;
+}
+
+#navbar-dropdowns a,
+#navbar-dropdowns a * {
+    color: var(--ds-muted) !important;
+    font-size: 13px;
+}
+
+#navbar-dropdowns a:hover,
+#navbar-dropdowns a:hover * {
+    color: var(--ds-accent) !important;
+}
+
+/* The coral mark in the header picks up the accent colour. */
+#main-nav > a:first-child svg {
+    color: var(--ds-accent);
+}
+
+#lang-segmented {
+    background: var(--ds-surface-soft) !important;
+    border: 1px solid var(--ds-border) !important;
+    color: var(--ds-text) !important;
+}
+
+/* ---------- surfaces ---------- */
+
+.mantine-Card-root,
+.mantine-Paper-root {
+    background: var(--ds-surface);
+    border-color: var(--ds-border);
+    border-radius: var(--ds-radius-card);
+}
+
+.mantine-Accordion-item {
+    background: var(--ds-surface);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--ds-radius-card);
+    overflow: hidden;
+}
+
+/* ---------- typography ---------- */
+
+/* Numbers carry the design's display face; set through helper classes so the
+   markup stays free of font names. */
+.ds-value {
+    font-family: var(--ds-font-display);
+    letter-spacing: -0.02em;
+}
+
+.ds-mono {
+    font-family: var(--ds-font-mono);
+}
+
+.mantine-Title-root {
+    font-family: var(--ds-font-display);
+    letter-spacing: -0.01em;
+}
+
+/* ---------- control rail ---------- */
+
+/* The design puts the inputs on a dark rail. Mantine draws its labels and values
+   with theme colours, which have to be lifted to the rail palette. */
+#input-container {
+    background: var(--ds-rail);
+    border-radius: var(--ds-radius-card);
+    padding: 18px 16px;
+    color: var(--ds-rail-text);
+}
+
+#input-container .mantine-Accordion-item {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+}
+
+#input-container .mantine-Accordion-control,
+#input-container .mantine-Accordion-control * {
+    color: #ffffff;
+}
+
+#input-container .mantine-Text-root,
+#input-container .mantine-Checkbox-label,
+#input-container .mantine-Switch-label,
+#input-container label {
+    color: var(--ds-rail-text);
+}
+
+/* Secondary text needs to stay legible on the rail, so it is lifted well above the
+   muted grey the light theme uses. */
+#input-container .mantine-Text-root[data-dimmed],
+#input-container .mantine-InputWrapper-description,
+#input-container .mantine-Switch-description,
+#input-container .mantine-Accordion-description {
+    color: #93a3b8 !important;
+}
+
+/* Mantine's light button variant is a pale tint of the accent, which disappears on the
+   dark rail; on the rail the design uses outlined chips instead. */
+#input-container .mantine-Button-root[data-variant="light"] {
+    background: rgba(203, 213, 225, 0.08);
+    border: 1px solid var(--ds-rail-border);
+    color: var(--ds-rail-text);
+}
+
+#input-container .mantine-Button-root[data-variant="light"]:hover {
+    background: rgba(203, 213, 225, 0.16);
+    color: #ffffff;
+}
+
+#input-container .mantine-Button-root[data-variant="filled"] {
+    background: var(--ds-accent);
+    color: #ffffff;
+}
+
+#input-container .mantine-Button-root[data-variant="filled"]:hover {
+    background: var(--ds-accent-hover);
+}
+
+#input-container .mantine-Button-root[data-variant="subtle"] {
+    color: var(--ds-rail-text);
+}
+
+/* Icons inside the rail buttons inherit the button colour instead of their own. */
+#input-container .mantine-Button-root svg {
+    color: currentColor;
+}
+
+#input-container .mantine-Badge-root {
+    background: transparent;
+    color: var(--ds-rail-label);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 9px;
+}
+
+/* Inputs stay light so their text keeps its contrast on the dark rail. */
+#input-container .mantine-Input-input {
+    background: var(--ds-surface);
+    border-color: var(--ds-rail-border);
+    color: var(--ds-text);
+}
+
+#input-container .mantine-Slider-track::before {
+    background: var(--ds-rail-border);
+}
+
+#input-container .mantine-Slider-bar {
+    background: var(--ds-accent-bright);
+}
+
+#input-container .mantine-Slider-thumb {
+    border-color: var(--ds-accent-bright);
+    background: #ffffff;
+}
+
+#input-container .mantine-Slider-markLabel {
+    color: var(--ds-rail-label);
+}
+
+#input-container .mantine-Slider-label {
+    background: var(--ds-rail-border);
+    font-family: var(--ds-font-mono);
+}
+
+#input-container details summary {
+    color: var(--ds-rail-text);
+}
+
+/* ---------- plot cells ---------- */
+
+.mantine-Badge-root[data-variant="dot"] {
+    text-transform: none;
+}
+
+/* ---------- ocean scene ---------- */
+
+/* The scene brings its own palette and stays as it is; only its cards pick up
+   the design's radius so they match the rest of the page. */
+.ocean-card {
+    border-radius: var(--ds-radius-tile);
+}
+
+.ocean-scene {
+    border-radius: var(--ds-radius-card);
+}

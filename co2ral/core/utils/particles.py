@@ -14,7 +14,8 @@ PARTICLE_TOTAL = 40
 # so at every moment one particle of each species exists in a pair.
 SWAP_SECONDS = 8
 
-SPECIES_COLORS = {"CO2": "#f76707", "HCO3": "#1c7ed6", "CO3": "#0ca678"}
+# Species colours taken from the design project, matching the speciation chart.
+SPECIES_COLORS = {"CO2": "#eab308", "HCO3": "#0ea5e9", "CO3": "#7c3aed"}
 SPECIES_LABELS = {"CO2": "CO₂", "HCO3": "HCO₃⁻", "CO3": "CO₃²⁻"}
 SPECIES_ORDER = ("CO2", "HCO3", "CO3")
 

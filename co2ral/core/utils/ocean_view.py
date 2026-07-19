@@ -162,7 +162,13 @@ def _value_card(label: str, value: str, unit: str, delta: tuple[str, str], lang:
             dmc.Text(label, size="xs", c=_TEXT_MUTED),
             dmc.Group(
                 [
-                    dmc.Text(value, fw=700, c=_TEXT_DARK, style={"fontSize": "26px", "lineHeight": "1.1"}),
+                    dmc.Text(
+                        value,
+                        fw=700,
+                        c=_TEXT_DARK,
+                        className="ds-value",
+                        style={"fontSize": "26px", "lineHeight": "1.1"},
+                    ),
                     dmc.Text(unit, size="xs", c=_TEXT_MUTED),
                 ],
                 gap=4,
@@ -307,6 +313,7 @@ def create_ocean_view(value_pco2: float, value_temperature: float, lang: str = "
                                 f"{round(value_pco2)}",
                                 fw=700,
                                 c=_TEXT_DARK,
+                                className="ds-value",
                                 style={"fontSize": "34px", "lineHeight": "1.1"},
                             ),
                             dmc.Text("μatm pCO₂", size="xs", c=_TEXT_MUTED),

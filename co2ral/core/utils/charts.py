@@ -5,7 +5,8 @@ from core.utils.marine_model import SPECIATION_PARAMS, MarineModelParameter
 from locales.translation import TRANSLATION_DICT
 
 
-SPECIATION_COLORS = ["orange.6", "blue.6", "teal.6"]
+# Species colours taken from the design project: CO2 yellow, HCO3 sky, CO3 violet.
+SPECIATION_COLORS = ["#eab308", "#0ea5e9", "#7c3aed"]
 
 # pH range and resolution for the Bjerrum plot.
 BJERRUM_PH_MIN = 4.0
