@@ -23,24 +23,24 @@ ui_link = "https://github.com/f1nkster/co2ral"
 PYCO2SYS_REPO = "https://github.com/mvdh7/PyCO2SYS"
 PYCO2SYS_DOCS = "https://pyco2sys.readthedocs.io/"
 
-# The university logo is not part of the repository (see .gitignore) and has to be placed
+# University logos are not part of the repository (see .gitignore) and have to be placed
 # in the assets folder on each machine. Any file extension works.
 ASSETS_DIR = pathlib.Path(__file__).resolve().parents[2] / "assets"
-PARTNER_LOGO_STEM = "fau-logo"
-FALLBACK_LOGO = "/assets/LogoChemiedidaktik.svg"
+PARTNER_LOGO_STEMS = ("fau-logo", "LogoChemiedidaktik")
 
 
-def get_partner_logo_src() -> str:
+def get_partner_logo_src() -> str | None:
     """Finds the university logo in the assets folder.
 
     Resolved per call, so the logo appears as soon as the file is dropped in, without
-    restarting the app. Falls back to the chair logo while no file is present.
+    restarting the app.
 
-    :return: Asset url of the logo to display.
+    :return: Asset url of the logo, or None if no logo file is present.
     """
-    for candidate in sorted(ASSETS_DIR.glob(f"{PARTNER_LOGO_STEM}.*")):
-        return f"/assets/{candidate.name}"
-    return FALLBACK_LOGO
+    for stem in PARTNER_LOGO_STEMS:
+        for candidate in sorted(ASSETS_DIR.glob(f"{stem}.*")):
+            return f"/assets/{candidate.name}"
+    return None
 
 
 def get_lang_from_search(search: str) -> str:
@@ -131,19 +131,25 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
         gap=4,
     )
 
-    # University logo, resolved from the assets folder.
-    logo_cd = html.A(
-        [
-            html.Img(
-                src=get_partner_logo_src(),
-                alt="FAU Erlangen-Nürnberg",
-                height="34px",
-                style={"marginRight": "12px"},
-            )
-        ],
-        href="https://www.chemiedidaktik.phil.fau.de/",
-        style={"width": "auto"},
-        className="d-none d-md-block",
+    # University logo, resolved from the assets folder. Omitted entirely when no logo file
+    # is present, so a missing file never shows up as a broken image.
+    logo_source = get_partner_logo_src()
+    logo_cd = (
+        html.A(
+            [
+                html.Img(
+                    src=logo_source,
+                    alt="FAU Erlangen-Nürnberg",
+                    height="34px",
+                    style={"marginRight": "12px"},
+                )
+            ],
+            href="https://www.chemiedidaktik.phil.fau.de/",
+            style={"width": "auto"},
+            className="d-none d-md-block",
+        )
+        if logo_source
+        else None
     )
 
     # Theme Switching
@@ -235,7 +241,11 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
 
     return dbc.Navbar(
         id="main-nav",
-        children=[title_elements, panels, logo_cd, color_mode_switch, lang_switch, git_logo],
+        children=[
+            child
+            for child in [title_elements, panels, logo_cd, color_mode_switch, lang_switch, git_logo]
+            if child is not None
+        ],
         dark=True,
         color="#141B21",
         sticky="top",
