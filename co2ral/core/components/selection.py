@@ -120,6 +120,7 @@ def range_slider(
     step: Union[float, int] = 1,
     labels_as_int: bool = True,
     info: Union[None, str] = None,
+    disabled: bool = False,
 ) -> html.Div:
     """Creates a range slider
 
@@ -133,6 +134,7 @@ def range_slider(
     :param step: step for slider, defaults to 1
     :param labels_as_int: labels as int or not, defaults to True
     :param info: explanation text shown in a tooltip next to the title, defaults to None
+    :param disabled: greys out the slider, e.g. when its value is derived elsewhere
     :return: range slider element
     """
     # Create Marks
@@ -161,6 +163,7 @@ def range_slider(
                 max=max_val,
                 marks=labelled_marks,
                 labelAlwaysOn=True,
+                disabled=disabled,
                 mt=28,
                 # Update the value only when the user releases the handle, so live plot
                 # updates trigger exactly one computation per adjustment.

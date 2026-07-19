@@ -89,6 +89,17 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "ocean_today": "today",
         "ocean_2100": "possible 2100",
         "ocean_jump": "Jump to:",
+        "ocean_warming_hint": (
+            "More CO₂ in the air also warms the water. This model computes the chemistry at the "
+            "temperature you set — switch on the climate coupling to have the warming follow along."
+        ),
+        "climate_toggle": "Climate coupling",
+        "climate_toggle_hint": "Temperature follows the CO₂ level",
+        "climate_note_template": (
+            "Assumed: {warming} °C sea surface warming per doubling of CO₂, starting from "
+            "{baseline} °C at 280 μatm. A simplified assumption, not a climate projection — "
+            "the carbonate model itself does not link CO₂ and temperature."
+        ),
         "predict_toggle": "Prediction mode",
         "predict_toggle_hint": "Guess first, then see the values",
         "predict_q_ph": "What happens to the pH?",
@@ -289,6 +300,17 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "ocean_today": "heute",
         "ocean_2100": "mögliche 2100",
         "ocean_jump": "Springe zu:",
+        "ocean_warming_hint": (
+            "Mehr CO₂ in der Luft erwärmt auch das Wasser. Dieses Modell rechnet die Chemie bei der "
+            "Temperatur, die du einstellst — mit der Klima-Kopplung wandert die Erwärmung mit."
+        ),
+        "climate_toggle": "Klima-Kopplung",
+        "climate_toggle_hint": "Temperatur folgt dem CO₂-Gehalt",
+        "climate_note_template": (
+            "Angenommen: {warming} °C Erwärmung der Meeresoberfläche pro Verdopplung des CO₂, "
+            "ausgehend von {baseline} °C bei 280 μatm. Vereinfachte Annahme, keine Klimaprojektion — "
+            "das Karbonatmodell selbst verknüpft CO₂ und Temperatur nicht."
+        ),
         "predict_toggle": "Vorhersage-Modus",
         "predict_toggle_hint": "Erst tippen, dann die Werte sehen",
         "predict_q_ph": "Was passiert mit dem pH-Wert?",

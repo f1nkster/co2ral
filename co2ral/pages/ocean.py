@@ -2,6 +2,11 @@ import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from core.components import selection as sel
+from core.utils.climate import (
+    PREINDUSTRIAL_SEA_SURFACE_TEMPERATURE,
+    SEA_SURFACE_WARMING_PER_DOUBLING,
+    coupled_temperature,
+)
 from core.utils.marine_model import run_single_state
 from core.utils.ocean_view import PCO2_MILESTONES, create_ocean_view
 from core.utils.particles import create_particle_view
@@ -81,6 +86,26 @@ def _direction(previous: float, current: float, decimals: int) -> str:
     return "same"
 
 
+def _climate_note(climate_active: bool, lang: str) -> Component | None:
+    """Names the coupling assumption whenever the coupling is switched on.
+
+    :param climate_active: Whether the climate coupling is active.
+    :param lang: Selected language.
+    :return: Note component, or None while the coupling is off.
+    """
+    if not climate_active:
+        return None
+
+    numbers = {
+        "warming": f"{SEA_SURFACE_WARMING_PER_DOUBLING:g}",
+        "baseline": f"{PREINDUSTRIAL_SEA_SURFACE_TEMPERATURE:g}",
+    }
+    if lang == "de":
+        numbers = {key: value.replace(".", ",") for key, value in numbers.items()}
+
+    return dmc.Text(TRANSLATION_DICT[lang]["climate_note_template"].format(**numbers), size="xs", c="dimmed", mt=4)
+
+
 def _prediction_card(store: dict, lang: str) -> Component:
     """Builds the question or the feedback of the prediction mode.
 
@@ -144,6 +169,9 @@ def layout(**url_queries: dict) -> Component:
     value_pco2 = min(max(_to_number(url_queries.get("co2"), 420), PCO2_MIN), PCO2_MAX)
     value_temperature = min(max(_to_number(url_queries.get("temp"), 18), TEMPERATURE_MIN), TEMPERATURE_MAX)
     predict_active = str(url_queries.get("predict", "")).lower() in ("1", "true")
+    climate_active = str(url_queries.get("climate", "")).lower() in ("1", "true")
+    if climate_active:
+        value_temperature = coupled_temperature(value_pco2, TEMPERATURE_MIN, TEMPERATURE_MAX)
 
     milestones = dmc.Group(
         [dmc.Text(dictionary["ocean_jump"], size="xs", c="dimmed")]
@@ -184,7 +212,17 @@ def layout(**url_queries: dict) -> Component:
                 min_val=TEMPERATURE_MIN,
                 max_val=TEMPERATURE_MAX,
                 step=1,
+                disabled=climate_active,
             ),
+            dmc.Switch(
+                id="climate-switch",
+                label=dictionary["climate_toggle"],
+                description=dictionary["climate_toggle_hint"],
+                checked=climate_active,
+                size="sm",
+                mt="md",
+            ),
+            html.Div(id="climate-note", children=_climate_note(climate_active, lang)),
             dmc.Switch(
                 id="predict-switch",
                 label=dictionary["predict_toggle"],
@@ -213,6 +251,7 @@ def layout(**url_queries: dict) -> Component:
                 ],
             ),
             dmc.Text(dictionary["ocean_hint_ph"], size="xs", c="dimmed", mt="xs"),
+            dmc.Text(dictionary["ocean_warming_hint"], size="xs", c="dimmed"),
             dmc.Anchor(dictionary["ocean_back"], href=f"/?mode=schule&lang={lang}", size="sm"),
             dcc.Store(id="ocean-lang-store", data=lang),
             dcc.Store(id="predict-store", data=_default_store(predict_active, value_pco2, value_temperature)),
@@ -228,6 +267,47 @@ def layout(**url_queries: dict) -> Component:
 
 
 @callback(
+    [
+        Output("ocean-temp", "value"),
+        Output("ocean-temp", "disabled"),
+        Output("climate-note", "children"),
+    ],
+    [
+        Input("ocean-pco2", "value"),
+        Input("climate-switch", "checked"),
+    ],
+    [
+        State("ocean-temp", "value"),
+        State("ocean-lang-store", "data"),
+    ],
+)
+def apply_climate_coupling(value_pco2: float, climate_active: bool, value_temperature: float, lang: str) -> tuple:
+    """Lets the temperature follow the CO2 level while the coupling is switched on.
+
+    The slider is disabled in that case, because its value is then derived rather than
+    chosen — otherwise students could set a combination the coupling contradicts.
+
+    :param value_pco2: Current CO2 value.
+    :param climate_active: Whether the climate coupling is active.
+    :param value_temperature: Current temperature value.
+    :param lang: Selected language.
+    :return: Temperature, disabled flag and the note naming the assumption.
+    """
+    lang = lang if lang in TRANSLATION_DICT else "de"
+    if value_pco2 is None:
+        return (dash.no_update, dash.no_update, dash.no_update)
+
+    if not climate_active:
+        return (dash.no_update, False, None)
+
+    return (
+        coupled_temperature(value_pco2, TEMPERATURE_MIN, TEMPERATURE_MAX),
+        True,
+        _climate_note(True, lang),
+    )
+
+
+@callback(
     Output("predict-store", "data"),
     [
         Input("ocean-pco2", "value"),
@@ -235,7 +315,10 @@ def layout(**url_queries: dict) -> Component:
         Input("predict-switch", "checked"),
         Input({"type": "predict-answer", "value": ALL}, "n_clicks"),
     ],
-    State("predict-store", "data"),
+    [
+        State("predict-store", "data"),
+        State("climate-switch", "checked"),
+    ],
 )
 def update_prediction(
     value_pco2: float,
@@ -243,6 +326,7 @@ def update_prediction(
     predict_active: bool,
     answer_clicks: list[int],
     store: dict,
+    climate_active: bool,
 ) -> dict:
     """Drives the prediction cycle: moving a slider poses a question, answering reveals
        the values again. Without prediction mode the state simply follows the sliders.
@@ -252,6 +336,7 @@ def update_prediction(
     :param predict_active: Whether prediction mode is switched on.
     :param answer_clicks: Click counts of the answer buttons.
     :param store: Previous prediction state.
+    :param climate_active: Whether the climate coupling is active.
     :return: Updated prediction state.
     """
     if value_pco2 is None or value_temperature is None:
@@ -267,11 +352,25 @@ def update_prediction(
         store["chosen"] = triggered["value"]
         return store
 
+    # While coupled, a temperature change is a consequence of the CO2 slider rather than an
+    # action of its own: record it, but leave a pending question untouched.
+    if triggered == "ocean-temp" and climate_active:
+        store["temp"] = value_temperature
+        return store
+
     # A slider moved while prediction mode is on: ask before showing the new values.
     if triggered in _SLIDER_QUANTITY and predict_active:
         quantity = _SLIDER_QUANTITY[triggered]
-        previous = run_single_state(value_pco2=store["pco2"], value_temperature=store["temp"])
-        current = run_single_state(value_pco2=value_pco2, value_temperature=value_temperature)
+        # Under coupling the temperatures follow from the CO2 levels, so both states are
+        # derived here instead of read from the slider, which may not have updated yet.
+        if climate_active:
+            previous_temperature = coupled_temperature(store["pco2"], TEMPERATURE_MIN, TEMPERATURE_MAX)
+            current_temperature = coupled_temperature(value_pco2, TEMPERATURE_MIN, TEMPERATURE_MAX)
+        else:
+            previous_temperature, current_temperature = store["temp"], value_temperature
+
+        previous = run_single_state(value_pco2=store["pco2"], value_temperature=previous_temperature)
+        current = run_single_state(value_pco2=value_pco2, value_temperature=current_temperature)
         store.update(
             phase="asking",
             quantity=quantity,
