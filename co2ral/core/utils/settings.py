@@ -65,6 +65,7 @@ class Settings:
     temperature: float = TEMPERATURE.default_value
     total_silicate: float = TOTAL_SILICATE.default_value
     total_phosphate: float = TOTAL_PHOSPHATE.default_value
+    show_bjerrum: bool = False
 
     @classmethod
     def from_query(cls, url_queries: dict) -> "Settings":
@@ -100,6 +101,7 @@ class Settings:
             temperature=_to_float(url_queries.get("temp"), defaults.temperature),
             total_silicate=_to_float(url_queries.get("sil"), defaults.total_silicate),
             total_phosphate=_to_float(url_queries.get("phos"), defaults.total_phosphate),
+            show_bjerrum=str(url_queries.get("bjerrum", "")).lower() in ("1", "true"),
         )
 
     def to_query(self) -> str:
@@ -107,7 +109,7 @@ class Settings:
 
         :return: Query string, e.g. "par1=alkalinity&par1val=2300&...".
         """
-        return (
+        query = (
             f"par1={self.par1_name}"
             f"&par1val={_format_number(self.par1_value)}"
             f"&par2={self.par2_name}"
@@ -120,3 +122,6 @@ class Settings:
             f"&sil={_format_number(self.total_silicate)}"
             f"&phos={_format_number(self.total_phosphate)}"
         )
+        if self.show_bjerrum:
+            query += "&bjerrum=1"
+        return query

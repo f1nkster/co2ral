@@ -40,6 +40,17 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "compare_stop": "End comparison",
         "comparison_suffix": " (comparison)",
         "comparison_prefix": "Comparison",
+        "bjerrum_toggle": "Show Bjerrum plot",
+        "bjerrum_title": "Bjerrum plot",
+        "bjerrum_hint": (
+            "Shares of the DIC species as a function of pH at the current temperature and salinity. "
+            "The crossing points mark pK₁ and pK₂; dashed gray: pH range of the current model run."
+        ),
+        "fraction_label": "Fraction [%]",
+        "current_ph_label": "current pH",
+        "experiments": "Le Chatelier experiments",
+        "experiments_hint": "Guided disturbances: the previous state stays visible as a gray comparison line.",
+        "exp_end": "End experiment",
         "expl_alkalinity": (
             "Total alkalinity describes the seawater's capacity to neutralize acids (buffering capacity). "
             "It increases e.g. through weathering of carbonate rock."
@@ -111,6 +122,17 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "compare_stop": "Vergleich beenden",
         "comparison_suffix": " (Vergleich)",
         "comparison_prefix": "Vergleich",
+        "bjerrum_toggle": "Bjerrum-Diagramm anzeigen",
+        "bjerrum_title": "Bjerrum-Diagramm",
+        "bjerrum_hint": (
+            "Anteile der DIC-Spezies in Abhängigkeit vom pH bei aktueller Temperatur und Salinität. "
+            "Die Schnittpunkte markieren pK₁ und pK₂; grau gestrichelt: pH-Bereich des aktuellen Modelllaufs."
+        ),
+        "fraction_label": "Anteil [%]",
+        "current_ph_label": "aktueller pH",
+        "experiments": "Le-Chatelier-Experimente",
+        "experiments_hint": "Geführte Störungen: Der vorherige Zustand bleibt als graue Vergleichslinie sichtbar.",
+        "exp_end": "Experiment beenden",
         "expl_alkalinity": (
             "Die Gesamtalkalität beschreibt die Fähigkeit des Meerwassers, Säuren zu neutralisieren "
             "(Puffervermögen). Sie steigt z. B. durch Verwitterung von Kalkgestein."

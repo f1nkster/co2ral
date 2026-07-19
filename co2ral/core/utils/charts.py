@@ -2,9 +2,15 @@ import dash_mantine_components as dmc
 import numpy as np
 import plotly.graph_objs as go
 from core.utils.marine_model import SPECIATION_PARAMS, MarineModelParameter
+from locales.translation import TRANSLATION_DICT
 
 
 SPECIATION_COLORS = ["orange.6", "blue.6", "teal.6"]
+
+# pH range and resolution for the Bjerrum plot.
+BJERRUM_PH_MIN = 4.0
+BJERRUM_PH_MAX = 12.0
+BJERRUM_STEPS = 41
 
 
 def _is_saturation_param(param: MarineModelParameter) -> bool:
@@ -161,4 +167,94 @@ def create_speciation_chart(
         withDots=False,
         xAxisLabel=par_xaxis.get_axis_label(lang=lang),
         xAxisProps={"type": "number", "domain": ["auto", "auto"]},
+    )
+
+
+def _find_crossing(x_values: np.ndarray, first: np.ndarray, second: np.ndarray) -> float | None:
+    """Finds the x position where two curves cross, via sign change and linear interpolation.
+
+    :param x_values: Common x values of both curves.
+    :param first: y values of the first curve.
+    :param second: y values of the second curve.
+    :return: Interpolated x of the first crossing, or None if the curves do not cross.
+    """
+    difference = first - second
+    sign_changes = np.where(np.diff(np.sign(difference)) != 0)[0]
+    if len(sign_changes) == 0:
+        return None
+    i = int(sign_changes[0])
+    x0, x1 = x_values[i], x_values[i + 1]
+    y0, y1 = difference[i], difference[i + 1]
+    if y1 == y0:
+        return float(np.round(x0, 1))
+    return float(np.round(x0 - y0 * (x1 - x0) / (y1 - y0), 1))
+
+
+def create_bjerrum_chart(
+    bjerrum_results: dict,
+    current_ph_values: np.ndarray,
+    lang: str = "de",
+) -> dmc.LineChart:
+    """Creates the classic Bjerrum plot: shares of the DIC species as a function of pH.
+       The curve crossings mark pK₁ and pK₂; the pH range of the current model run is
+       shown as dashed reference lines.
+
+    :param bjerrum_results: Result dict of a model run with pH as second parameter.
+    :param current_ph_values: pH values of the current model run, marked in the plot.
+    :param lang: Language for labels.
+    :return: Line chart with three fraction curves.
+    """
+    ph_values = np.atleast_1d(bjerrum_results["par2"])
+    species_values = {param.name: np.atleast_1d(bjerrum_results[param.name]) for param in SPECIATION_PARAMS}
+    total = sum(species_values.values())
+    fractions = {name: np.round(values / total * 100, 1) for name, values in species_values.items()}
+
+    data = []
+    for i, ph in enumerate(ph_values):
+        row = {"x": float(np.round(ph, 2))}
+        for param in SPECIATION_PARAMS:
+            row[param.label[lang]] = float(fractions[param.name][i])
+        data.append(row)
+
+    series = [
+        {"name": param.label[lang], "color": color}
+        for param, color in zip(SPECIATION_PARAMS, SPECIATION_COLORS, strict=False)
+    ]
+
+    # The crossings of neighboring species curves mark pK1 and pK2. A crossing is a sign
+    # change of the difference (an argmin of |difference| would wrongly pick the range
+    # edges, where both minority species approach zero).
+    co2_aq, hco3, co3 = (fractions[param.name] for param in SPECIATION_PARAMS)
+    reference_lines = []
+    for label, crossing in (
+        ("pK₁", _find_crossing(ph_values, co2_aq, hco3)),
+        ("pK₂", _find_crossing(ph_values, hco3, co3)),
+    ):
+        if crossing is not None:
+            reference_lines.append(
+                {"x": crossing, "label": f"{label} ≈ {crossing}", "color": "grape.6", "strokeDasharray": "2 4"}
+            )
+
+    # Mark the pH range covered by the current model run.
+    ph_min = float(np.round(np.min(current_ph_values), 2))
+    ph_max = float(np.round(np.max(current_ph_values), 2))
+    current_label = TRANSLATION_DICT[lang]["current_ph_label"]
+    reference_lines.append({"x": ph_min, "label": current_label, "color": "gray.6", "strokeDasharray": "5 5"})
+    if abs(ph_max - ph_min) > 0.05:
+        reference_lines.append({"x": ph_max, "color": "gray.6", "strokeDasharray": "5 5"})
+
+    return dmc.LineChart(
+        h=300,
+        dataKey="x",
+        data=data,
+        series=series,
+        curveType="natural",
+        withXAxis=True,
+        withDots=False,
+        withLegend=True,
+        xAxisLabel="pH [-]",
+        yAxisLabel=TRANSLATION_DICT[lang]["fraction_label"],
+        xAxisProps={"type": "number", "domain": ["auto", "auto"]},
+        yAxisProps={"domain": [0, 100]},
+        referenceLines=reference_lines,
     )

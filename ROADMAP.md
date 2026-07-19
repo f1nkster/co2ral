@@ -36,14 +36,14 @@ Fundament: Das Gleichgewicht soll *unmittelbar* auf Eingriffe reagieren.
 
 ## Phase 2 — Gleichgewichte verstehen
 
-- [ ] **Bjerrum-Diagramm (M)** — das klassische Speziierungsdiagramm (Anteile vs. pH) mit
-      Markierung des aktuellen Zustands; Kurvenlage abhängig von T und S → zeigt, dass
-      Gleichgewichtskonstanten keine Naturkonstanten des Diagramms sind.
-- [ ] **Le-Chatelier-Experimente (M)** — geführte Störungs-Buttons mit Erklärtext:
-      „+CO₂ (Verbrennung)", „Erwärmung +5 °C", „Kalk zugeben (Alkalinität ↑)".
-      Jeweils Vorher/Nachher-Ansicht und ein Satz Deutung.
-- [ ] **Puffer erleben (S)** — Vergleichs-Preset „Meerwasser vs. kalkarmes Süßwasser":
-      gleicher CO₂-Eintrag, drastisch anderer pH-Effekt → Alkalinität als Puffer begreifen.
+- [x] **Bjerrum-Diagramm (M)** — das klassische Speziierungsdiagramm (Anteile vs. pH),
+      zuschaltbar, mit pK₁/pK₂-Markern an den Kurvenschnittpunkten und Markierung des
+      pH-Bereichs des aktuellen Laufs; Kurvenlage abhängig von T und S.
+- [x] **Le-Chatelier-Experimente (M)** — vier geführte Störungen mit Erklär-Banner:
+      CO₂-Eintrag, Erwärmung, Kalkzugabe, Puffervergleich. Jeweils gestörter Zustand
+      gegen eingefrorene Baseline als Vergleichsserie; per URL teilbar (exp=…).
+- [x] **Puffer erleben (S)** — als Experiment „Meerwasser vs. alkalinitätsarmes Wasser":
+      gleicher CO₂-Anstieg, drastisch anderer pH-Effekt → Alkalinität als Puffer begreifen.
 
 ## Phase 3 — Schultauglichkeit
 

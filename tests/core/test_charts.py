@@ -1,5 +1,10 @@
 import numpy as np
-from core.utils.charts import create_line_chart, create_line_chart_figure, create_speciation_chart
+from core.utils.charts import (
+    create_bjerrum_chart,
+    create_line_chart,
+    create_line_chart_figure,
+    create_speciation_chart,
+)
 from core.utils.marine_model import DIC, OMEGA_ARAGONITE, PCO2, PH, SPECIATION_PARAMS
 
 
@@ -92,6 +97,31 @@ def test__create_speciation_chart__stacks_all_three_species_to_percent():
     assert chart.data[0]["CO₂(aq)"] == 10
     assert chart.data[0]["HCO₃⁻"] == 1600
     assert chart.data[0]["CO₃²⁻"] == 220
+
+
+def test__create_bjerrum_chart__fractions_pk_markers_and_current_ph():
+    """GIVEN model results over a pH range with the three DIC species
+    WHEN the Bjerrum chart is created
+    THEN the fractions sum to 100 %, pK markers sit at the curve crossings and the
+         current pH range is marked
+    """
+    ph = np.linspace(4, 12, 33)
+    # Synthetic but shape-correct speciation: CO2 dominates at low pH, CO3 at high pH.
+    co2 = np.linspace(100, 0, 33)
+    co3 = np.linspace(0, 100, 33)
+    hco3 = 100 - np.abs(co2 - co3) / 2
+    results = {"par2": ph, "CO2": co2, "HCO3": hco3, "CO3": co3}
+
+    chart = create_bjerrum_chart(bjerrum_results=results, current_ph_values=np.array([7.8, 8.2]), lang="de")
+
+    assert len(chart.series) == 3
+    first_row_sum = sum(v for k, v in chart.data[0].items() if k != "x")
+    assert abs(first_row_sum - 100) < 1
+    labels = [line.get("label", "") for line in chart.referenceLines]
+    assert any("pK₁" in label for label in labels)
+    assert any("pK₂" in label for label in labels)
+    assert any("aktueller pH" in label for label in labels)
+    assert {line["x"] for line in chart.referenceLines if "pK" not in line.get("label", "")} >= {7.8, 8.2}
 
 
 def test__create_line_chart_figure__sets_context_line_as_title():

@@ -1,5 +1,6 @@
 import urllib.parse
 
+from core.utils.experiments import EXPERIMENTS, get_experiment_by_name
 from core.utils.presets import PRESETS, get_preset_options
 from core.utils.settings import Settings
 
@@ -95,6 +96,58 @@ def test__settings__to_query_formats_integers_without_decimal():
     assert "par1val=2300" in query
     assert "par1val=2300.0" not in query
     assert "phos=1.5" in query
+
+
+def test__settings__bjerrum_flag_roundtrip():
+    """GIVEN settings with the Bjerrum plot enabled
+    WHEN they are serialized and parsed back
+    THEN the flag survives, and it defaults to off without the query parameter
+    """
+    enabled = Settings(show_bjerrum=True)
+
+    assert "bjerrum=1" in enabled.to_query()
+    assert Settings.from_query(_parse(enabled.to_query())).show_bjerrum is True
+    assert Settings.from_query({}).show_bjerrum is False
+
+
+def test__experiments__disturbed_settings_roundtrip_and_labels():
+    """GIVEN all defined experiments
+    WHEN their disturbed settings are serialized and parsed back
+    THEN they survive unchanged, and every experiment provides labels, descriptions
+         and frozen baseline conditions in both languages
+    """
+    for experiment in EXPERIMENTS:
+        parsed = Settings.from_query(_parse(experiment.disturbed.to_query()))
+        assert parsed == experiment.disturbed, f"experiment {experiment.name} does not survive the url roundtrip"
+
+        for lang in ("de", "en"):
+            assert experiment.label[lang]
+            assert experiment.description[lang]
+
+        frozen = experiment.frozen_conditions()
+        assert frozen["par1_name"] == experiment.baseline.par1_name
+        assert frozen["salinity"] == experiment.baseline.salinity
+        # The disturbance must actually change at least one frozen condition,
+        # otherwise the comparison would show two identical curves.
+        disturbed_conditions = {
+            "par1_name": experiment.disturbed.par1_name,
+            "par1_value": experiment.disturbed.par1_value,
+            "salinity": experiment.disturbed.salinity,
+            "temperature": experiment.disturbed.temperature,
+            "total_silicate": experiment.disturbed.total_silicate,
+            "total_phosphate": experiment.disturbed.total_phosphate,
+        }
+        assert disturbed_conditions != frozen, f"experiment {experiment.name} does not disturb anything"
+
+
+def test__get_experiment_by_name__lookup():
+    """GIVEN the experiment registry
+    WHEN experiments are looked up by name
+    THEN known names resolve and unknown names return None
+    """
+    assert get_experiment_by_name("co2_increase") is EXPERIMENTS[0]
+    assert get_experiment_by_name("does-not-exist") is None
+    assert get_experiment_by_name(None) is None
 
 
 def test__presets__roundtrip_through_query():

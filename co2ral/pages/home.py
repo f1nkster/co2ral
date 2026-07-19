@@ -8,11 +8,22 @@ import pandas as pd
 from core.components import navigation
 from core.components.advanced_settings import create_advanced_settings
 from core.components.basic_settings import create_basic_settings, create_par1_slider
-from core.utils.charts import create_line_chart, create_line_chart_figure, create_speciation_chart
+from core.utils.charts import (
+    BJERRUM_PH_MAX,
+    BJERRUM_PH_MIN,
+    BJERRUM_STEPS,
+    create_bjerrum_chart,
+    create_line_chart,
+    create_line_chart_figure,
+    create_speciation_chart,
+)
+from core.utils.experiments import get_experiment_by_name
 from core.utils.layout import get_generic_layout, plot_cell
 from core.utils.marine_model import (
     ALKALINITY,
     ALL_PARAMS,
+    DIC,
+    PH,
     SYSTEM_PARAMS,
     MarineModelParameter,
     run_model_cached,
@@ -40,10 +51,15 @@ def layout(**url_queries: dict) -> Component:
         lang = "de"
     settings = Settings.from_query(url_queries)
 
+    # A guided experiment loads the disturbed state (from the url) with the baseline
+    # conditions frozen as comparison, plus an explanation banner above the plots.
+    experiment = get_experiment_by_name(url_queries.get("exp"))
+    frozen_data = experiment.frozen_conditions() if experiment else None
+
     inputs = [
         dcc.Store(id="lang-store", data=lang),
-        dcc.Store(id="frozen-store", data=None),
-        create_basic_settings(lang=lang, settings=settings),
+        dcc.Store(id="frozen-store", data=frozen_data),
+        create_basic_settings(lang=lang, settings=settings, comparison_active=frozen_data is not None),
         dbc.Row(html.Div(), className="g-1", style={"height": "18px"}),
         create_advanced_settings(lang=lang, settings=settings),
         dbc.Row(html.Div(), className="g-1", style={"height": "18px"}),
@@ -51,8 +67,25 @@ def layout(**url_queries: dict) -> Component:
         dcc.Download(id="download-csv"),
     ]
 
+    experiment_banner = None
+    if experiment is not None:
+        experiment_banner = dmc.Alert(
+            [
+                dmc.Text(experiment.description[lang], size="sm"),
+                dmc.Anchor(TRANSLATION_DICT[lang]["exp_end"], href=f"/?lang={lang}", size="sm", mt=6),
+            ],
+            title=experiment.label[lang],
+            color="teal",
+            radius="md",
+            mb=12,
+        )
+
     input_layout = dbc.Container(html.Div(id="input-container", children=inputs), style={"width": "100%"}, fluid=True)
-    output_layout = dbc.Container(html.Div(id="plots-container"), style={"width": "100%"}, fluid=True)
+    output_layout = dbc.Container(
+        [html.Div(children=experiment_banner), html.Div(id="plots-container")],
+        style={"width": "100%"},
+        fluid=True,
+    )
 
     return get_generic_layout(input_layout, output_layout)
 
@@ -117,6 +150,7 @@ def _build_context_line(
         Input("slider-total-silicate", "value"),
         Input("slider-total_phosphate", "value"),
         Input("frozen-store", "data"),
+        Input("bjerrum-switch", "checked"),
     ],
     [
         State("par1-dd", "value"),
@@ -136,6 +170,7 @@ def create_plots(
     value_total_silicate: float,
     value_total_phosphate: float,
     frozen_data: dict | None,
+    show_bjerrum: bool,
     selected_par1_name: str,
     selected_par2_name: str,
     lang: str,
@@ -155,6 +190,7 @@ def create_plots(
     :param value_total_silicate: Value for total silicate.
     :param value_total_phosphate: Value for total phosphate.
     :param frozen_data: Frozen conditions for the comparison mode, or None.
+    :param show_bjerrum: Whether to render the Bjerrum plot panel.
     :param selected_par1_name: Name of the selected first parameter.
     :param selected_par2_name: Name of the selected second parameter.
     :param lang: Selected language.
@@ -242,6 +278,37 @@ def create_plots(
             with_download=False,
         )
     ]
+
+    # Optional Bjerrum panel: speciation as a function of pH at the current T and S,
+    # with the pH range of the current run marked.
+    if show_bjerrum:
+        bjerrum_results = run_model_cached(
+            2000.0,
+            DIC.type,
+            PH.type,
+            BJERRUM_PH_MIN,
+            BJERRUM_PH_MAX,
+            BJERRUM_STEPS,
+            value_salinity,
+            value_temperature,
+            value_total_silicate,
+            value_total_phosphate,
+        )
+        current_ph_values = np.atleast_1d(results["pH"]) if par1.name != "pH" else np.atleast_1d(value_par1)
+        plots.append(
+            plot_cell(
+                dictionary["bjerrum_title"],
+                html.Div(
+                    id="bjerrum-chart",
+                    style=cell_style,
+                    children=create_bjerrum_chart(
+                        bjerrum_results=bjerrum_results, current_ph_values=current_ph_values, lang=lang
+                    ),
+                ),
+                subtitle=[dictionary["bjerrum_hint"], context_line],
+                with_download=False,
+            )
+        )
 
     yaxis_params = [
         ALL_PARAMS.get_param_by_name(name) for name in yaxis_names if ALL_PARAMS.get_param_by_name(name) is not None
@@ -453,6 +520,7 @@ def update_par1_slider(selected_par1_name: str, lang: str) -> dmc.Slider:
         State("slider-temperature", "value"),
         State("slider-total-silicate", "value"),
         State("slider-total_phosphate", "value"),
+        State("bjerrum-switch", "checked"),
         State("lang-store", "data"),
     ],
     prevent_initial_call=True,
@@ -470,6 +538,7 @@ def build_share_link(
     value_temperature: float,
     value_total_silicate: float,
     value_total_phosphate: float,
+    show_bjerrum: bool,
     lang: str,
 ) -> str:
     """Builds a shareable url containing the current settings; the clipboard component copies it.
@@ -486,6 +555,7 @@ def build_share_link(
     :param value_temperature: Value of temperature.
     :param value_total_silicate: Value of total silicate.
     :param value_total_phosphate: Value of total phosphate.
+    :param show_bjerrum: Whether the Bjerrum plot is shown.
     :param lang: Selected language.
     :return: Absolute url with all settings as query parameters.
     """
@@ -501,6 +571,7 @@ def build_share_link(
         temperature=value_temperature,
         total_silicate=value_total_silicate,
         total_phosphate=value_total_phosphate,
+        show_bjerrum=bool(show_bjerrum),
     )
     host = request.host_url.rstrip("/")
     return f"{host}/?{settings.to_query()}&lang={lang}"

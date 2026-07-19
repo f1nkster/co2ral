@@ -1,6 +1,7 @@
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from core.components import selection as sel
+from core.utils.experiments import EXPERIMENTS
 from core.utils.marine_model import (
     ALL_PARAMS,
     SYSTEM_PARAMS,
@@ -8,7 +9,7 @@ from core.utils.marine_model import (
 )
 from core.utils.presets import get_preset_options
 from core.utils.settings import Settings
-from dash import dcc
+from dash import dcc, html
 from dash_iconify import DashIconify
 from env.colors import DMC_GRAY, DMC_LIME, DMC_RED, DMC_TEAL
 from locales.translation import TRANSLATION_DICT
@@ -37,11 +38,14 @@ def create_par1_slider(param: MarineModelParameter, value: float, lang: str) -> 
     )
 
 
-def create_basic_settings(lang: str = "de", settings: Settings | None = None) -> dmc.Accordion:
+def create_basic_settings(
+    lang: str = "de", settings: Settings | None = None, comparison_active: bool = False
+) -> dmc.Accordion:
     """Create the basic settings accordion for the marine model.
 
     :param lang: Language for labels, either "de" or "en".
     :param settings: Initial values for all controls; defaults are used if None.
+    :param comparison_active: Whether the comparison mode starts active (e.g. in an experiment).
     :return: The basic settings accordion component.
     """
     settings = settings or Settings()
@@ -66,6 +70,28 @@ def create_basic_settings(lang: str = "de", settings: Settings | None = None) ->
             style={"width": "100%"},
         )
     )
+    content.append(dbc.Row(style={"height": "10px"}))
+
+    # Guided Le Chatelier experiments: links that load a disturbed state with the
+    # baseline frozen as comparison.
+    content.append(sel.badge(dictionary["experiments"]))
+    content.append(dmc.Text(dictionary["experiments_hint"], size="xs", c="dimmed"))
+    for experiment in EXPERIMENTS:
+        content.append(
+            html.A(
+                dmc.Button(
+                    experiment.label[lang],
+                    variant="light",
+                    size="compact-sm",
+                    color=DMC_TEAL,
+                    fullWidth=True,
+                    styles={"label": {"whiteSpace": "normal", "textAlign": "left"}},
+                    leftSection=DashIconify(icon="mdi:flask-outline", width=16),
+                ),
+                href=f"/?{experiment.disturbed.to_query()}&exp={experiment.name}&lang={lang}",
+                style={"textDecoration": "none"},
+            )
+        )
     content.append(dbc.Row(style={"height": "10px"}))
 
     # Model settings
@@ -108,6 +134,15 @@ def create_basic_settings(lang: str = "de", settings: Settings | None = None) ->
             style={"width": "100%"},
         )
     )
+    content.append(
+        dmc.Switch(
+            id="bjerrum-switch",
+            label=dictionary["bjerrum_toggle"],
+            checked=settings.show_bjerrum,
+            size="sm",
+            mt=8,
+        )
+    )
     content.append(dbc.Row(style={"height": "30px"}))
 
     #  Apply and Reset Buttons
@@ -125,7 +160,7 @@ def create_basic_settings(lang: str = "de", settings: Settings | None = None) ->
     )
     compare_button = sel.button(
         "freeze-btn",
-        dictionary["compare_start"],
+        dictionary["compare_stop"] if comparison_active else dictionary["compare_start"],
         "mdi:compare-horizontal",
         color=DMC_TEAL,
     )
