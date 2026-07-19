@@ -28,6 +28,7 @@ from core.utils.marine_model import (
     MarineModelParameter,
     run_model_cached,
 )
+from core.utils.presets import SCHOOL_PRESETS, get_school_preset_by_name
 from core.utils.settings import Settings
 from dash import ALL, Input, Output, State, callback, ctx, dcc, html
 from dash.development.base_component import Component
@@ -49,27 +50,39 @@ def layout(**url_queries: dict) -> Component:
     lang = url_queries.get("lang", "de")
     if lang not in TRANSLATION_DICT:
         lang = "de"
-    settings = Settings.from_query(url_queries)
+
+    # School mode only changes the interface, not the model: all controls stay mounted,
+    # the technical ones are hidden. Without explicit parameters it opens on the first
+    # everyday scenario so students never see an unconfigured app.
+    school_mode = url_queries.get("mode") == "schule"
+    if school_mode and "par1" not in url_queries:
+        settings = SCHOOL_PRESETS[0].settings
+    else:
+        settings = Settings.from_query(url_queries)
 
     # A guided experiment loads the disturbed state (from the url) with the baseline
     # conditions frozen as comparison, plus an explanation banner above the plots.
     experiment = get_experiment_by_name(url_queries.get("exp"))
     frozen_data = experiment.frozen_conditions() if experiment else None
+    scenario = get_school_preset_by_name(url_queries.get("scen"))
 
     inputs = [
         dcc.Store(id="lang-store", data=lang),
+        dcc.Store(id="mode-store", data="schule" if school_mode else ""),
         dcc.Store(id="frozen-store", data=frozen_data),
-        create_basic_settings(lang=lang, settings=settings, comparison_active=frozen_data is not None),
+        create_basic_settings(
+            lang=lang, settings=settings, comparison_active=frozen_data is not None, school_mode=school_mode
+        ),
         dbc.Row(html.Div(), className="g-1", style={"height": "18px"}),
-        create_advanced_settings(lang=lang, settings=settings),
+        create_advanced_settings(lang=lang, settings=settings, school_mode=school_mode),
         dbc.Row(html.Div(), className="g-1", style={"height": "18px"}),
         dcc.Download(id="download-plot"),
         dcc.Download(id="download-csv"),
     ]
 
-    experiment_banner = None
+    banner = None
     if experiment is not None:
-        experiment_banner = dmc.Alert(
+        banner = dmc.Alert(
             [
                 dmc.Text(experiment.description[lang], size="sm"),
                 dmc.Anchor(TRANSLATION_DICT[lang]["exp_end"], href=f"/?lang={lang}", size="sm", mt=6),
@@ -79,10 +92,18 @@ def layout(**url_queries: dict) -> Component:
             radius="md",
             mb=12,
         )
+    elif scenario is not None and scenario.question is not None:
+        banner = dmc.Alert(
+            dmc.Text(scenario.question[lang], size="sm"),
+            title=f"{TRANSLATION_DICT[lang]['school_question']}: {scenario.label[lang]}",
+            color="teal",
+            radius="md",
+            mb=12,
+        )
 
     input_layout = dbc.Container(html.Div(id="input-container", children=inputs), style={"width": "100%"}, fluid=True)
     output_layout = dbc.Container(
-        [html.Div(children=experiment_banner), html.Div(id="plots-container")],
+        [html.Div(children=banner), html.Div(id="plots-container")],
         style={"width": "100%"},
         fluid=True,
     )
@@ -522,6 +543,7 @@ def update_par1_slider(selected_par1_name: str, lang: str) -> dmc.Slider:
         State("slider-total_phosphate", "value"),
         State("bjerrum-switch", "checked"),
         State("lang-store", "data"),
+        State("mode-store", "data"),
     ],
     prevent_initial_call=True,
 )
@@ -540,6 +562,7 @@ def build_share_link(
     value_total_phosphate: float,
     show_bjerrum: bool,
     lang: str,
+    mode: str,
 ) -> str:
     """Builds a shareable url containing the current settings; the clipboard component copies it.
 
@@ -557,6 +580,7 @@ def build_share_link(
     :param value_total_phosphate: Value of total phosphate.
     :param show_bjerrum: Whether the Bjerrum plot is shown.
     :param lang: Selected language.
+    :param mode: Interface mode, "schule" for the reduced school interface.
     :return: Absolute url with all settings as query parameters.
     """
     settings = Settings(
@@ -574,7 +598,8 @@ def build_share_link(
         show_bjerrum=bool(show_bjerrum),
     )
     host = request.host_url.rstrip("/")
-    return f"{host}/?{settings.to_query()}&lang={lang}"
+    mode_query = f"&mode={mode}" if mode else ""
+    return f"{host}/?{settings.to_query()}&lang={lang}{mode_query}"
 
 
 @callback(
@@ -720,7 +745,9 @@ dash.clientside_callback(
         if (value) {
             const urlParams = new URLSearchParams(window.location.search);
             const lang = urlParams.get('lang') || 'de';
-            window.location.assign(window.location.pathname + '?' + value + '&lang=' + lang);
+            const mode = urlParams.get('mode');
+            const modeQuery = mode ? '&mode=' + mode : '';
+            window.location.assign(window.location.pathname + '?' + value + '&lang=' + lang + modeQuery);
         }
         return window.dash_clientside.no_update;
     }
@@ -739,7 +766,9 @@ dash.clientside_callback(
         if (n_clicks) {
             const urlParams = new URLSearchParams(window.location.search);
             const lang = urlParams.get('lang') || 'de';
-            window.location.assign(window.location.pathname + '?lang=' + lang);
+            const mode = urlParams.get('mode');
+            const modeQuery = mode ? '&mode=' + mode : '';
+            window.location.assign(window.location.pathname + '?lang=' + lang + modeQuery);
         }
         return window.dash_clientside.no_update;
     }

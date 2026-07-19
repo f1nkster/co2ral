@@ -11,11 +11,18 @@ from core.utils.settings import Settings
 from locales.translation import TRANSLATION_DICT
 
 
-def create_advanced_settings(lang: str = "de", settings: Settings | None = None) -> dmc.Accordion:
+def create_advanced_settings(
+    lang: str = "de", settings: Settings | None = None, school_mode: bool = False
+) -> dmc.Accordion:
     """Create the advanced settings accordion for the marine model.
+
+    In school mode everything except the temperature slider is hidden: the components stay
+    mounted (dash callbacks reference their ids), but students only see the one control that
+    is intuitive to explore.
 
     :param lang: Language for labels, either "de" or "en".
     :param settings: Initial values for all controls; defaults are used if None.
+    :param school_mode: Whether to render the reduced school interface.
     :return: The advanced settings accordion component.
     """
     settings = settings or Settings()
@@ -24,8 +31,9 @@ def create_advanced_settings(lang: str = "de", settings: Settings | None = None)
     dictionary = TRANSLATION_DICT[lang]
     unit = dictionary["unit"]
     content = []
+    hidden_class = "school-hidden" if school_mode else None
 
-    content.append(sel.badge(dictionary["x_axis_settings"]))
+    x_axis_section = [sel.badge(dictionary["x_axis_settings"])]
     x_axis_row = dmc.Stack(
         [
             dmc.NumberInput(
@@ -60,10 +68,11 @@ def create_advanced_settings(lang: str = "de", settings: Settings | None = None)
         gap="xs",
     )
 
-    content.append(x_axis_row)
+    x_axis_section.append(x_axis_row)
+    content.append(dmc.Box(x_axis_section, className=hidden_class))
 
     ### Hydrographic Conditions
-    content.append(sel.badge(dictionary["hydrographic_conditions"]))
+    content.append(dmc.Box(sel.badge(dictionary["hydrographic_conditions"]), className=hidden_class))
     salinity_slider = sel.range_slider(
         id="slider-salinity",
         name=dictionary["practical_salinity"],
@@ -74,7 +83,7 @@ def create_advanced_settings(lang: str = "de", settings: Settings | None = None)
         step=1,
         info=dictionary.get("expl_salinity"),
     )
-    content.append(salinity_slider)
+    content.append(dmc.Box(salinity_slider, className=hidden_class))
     content.append(dbc.Row(style={"height": "10px"}))
     temperature_slider = sel.range_slider(
         id="slider-temperature",
@@ -90,7 +99,7 @@ def create_advanced_settings(lang: str = "de", settings: Settings | None = None)
     content.append(dbc.Row(style={"height": "40px"}))
 
     ### Nutrients
-    content.append(sel.badge(dictionary["nutrients"]))
+    content.append(dmc.Box(sel.badge(dictionary["nutrients"]), className=hidden_class))
     total_silicate_slider = sel.range_slider(
         id="slider-total-silicate",
         name=dictionary["total_silicate"],
@@ -101,7 +110,7 @@ def create_advanced_settings(lang: str = "de", settings: Settings | None = None)
         step=1,
         info=dictionary.get("expl_total_silicate"),
     )
-    content.append(total_silicate_slider)
+    content.append(dmc.Box(total_silicate_slider, className=hidden_class))
     content.append(dbc.Row(style={"height": "10px"}))
     total_phosphate_slider = sel.range_slider(
         id="slider-total_phosphate",
@@ -113,11 +122,17 @@ def create_advanced_settings(lang: str = "de", settings: Settings | None = None)
         step=1,
         info=dictionary.get("expl_total_phosphate"),
     )
-    content.append(total_phosphate_slider)
+    content.append(dmc.Box(total_phosphate_slider, className=hidden_class))
 
-    # Final assembly the accordion
+    # Final assembly the accordion. In school mode the temperature slider is the only control
+    # in here, so the section is renamed and opened by default instead of hiding it behind
+    # an "advanced settings" label students would not click.
+    title = dictionary["school_explore"] if school_mode else dictionary["advanced_settings"]
     accordion = sel.accordion_with_title(
-        dictionary["advanced_settings"], dmc.Stack(content, align="stretch", gap="xs"), icon="mdi:database-cog"
+        title,
+        dmc.Stack(content, align="stretch", gap="xs"),
+        icon="mdi:thermometer" if school_mode else "mdi:database-cog",
+        value=title if school_mode else "Controls",
     )
 
     return accordion

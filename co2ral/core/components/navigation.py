@@ -87,14 +87,22 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
         style={"position": "relative", "right": "5px"},
     )
 
+    # Localized labels per page path; the registry name itself is language independent.
+    page_labels = {
+        "/": TRANSLATION_DICT[lang]["nav_home"],
+        "/lehrkraefte": TRANSLATION_DICT[lang]["nav_teachers"],
+    }
+
+    style = {"height": "30px", "color": "white"}
     nav_items = []
     for page in dash.page_registry.values():
-        style = {"height": "30px", "color": "white"}
+        path = page["relative_path"]
         nav_items.append(
             dbc.NavItem(
                 dmc.NavLink(
-                    label=f"{page['name']}",
-                    href=page["relative_path"],
+                    label=page_labels.get(path, page["name"]),
+                    # Keep the language when navigating between pages.
+                    href=f"{path}?lang={lang}",
                     style=style,
                 ),
             )

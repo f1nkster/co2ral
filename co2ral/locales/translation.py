@@ -51,6 +51,61 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "experiments": "Le Chatelier experiments",
         "experiments_hint": "Guided disturbances: the previous state stays visible as a gray comparison line.",
         "exp_end": "End experiment",
+        "nav_home": "Explorer",
+        "nav_teachers": "For teachers",
+        "school_scenarios": "Choose a topic",
+        "school_explore": "Try it out",
+        "school_intro": "Pick a topic, then explore: drag the temperature slider and watch the charts respond.",
+        "school_question": "Question",
+        "to_school_mode": "School mode",
+        "to_pro_mode": "Full mode",
+        "teachers_title": "CO2RAL for teaching",
+        "teachers_intro": (
+            "CO2RAL models the marine carbonate system — a real-world context that covers the whole "
+            "curriculum area of chemical equilibrium. Every link below opens a ready-to-use state of the "
+            "app; copy it into your worksheet or learning platform."
+        ),
+        "teachers_curriculum": "Curriculum links",
+        "teachers_concept": "Concept",
+        "teachers_where": "Where in CO2RAL",
+        "teachers_lessons": "Ready-made lesson links",
+        "teachers_tasks": "Task suggestions",
+        "teachers_school_entry": "School mode (reduced interface)",
+        "teachers_note_title": "Good to know",
+        "teachers_note": (
+            "All settings are stored in the url, so any state you build can be shared as a link. "
+            "Charts can be downloaded as PNG, the underlying values as CSV (semicolon and decimal comma "
+            "in the German version, opens directly in Excel)."
+        ),
+        "curr_dynamic": "Equilibrium as a dynamic state",
+        "curr_dynamic_where": "Speciation panel: the shares shift while the system stays in equilibrium",
+        "curr_lechatelier": "Le Chatelier: concentration and temperature",
+        "curr_lechatelier_where": "Guided experiments: CO₂ input, warming, adding lime",
+        "curr_acidbase": "Acid-base equilibria, pK values",
+        "curr_acidbase_where": "Bjerrum plot with pK₁ and pK₂ markers",
+        "curr_solubility": "Solubility equilibrium",
+        "curr_solubility_where": "Saturation states Ω with the Ω = 1 threshold",
+        "curr_buffer": "Buffer systems",
+        "curr_buffer_where": "Buffer experiment: seawater vs. low-alkalinity water",
+        "task_1": (
+            "Read off the pH for 280, 420 and 1000 μatm pCO₂ and calculate the difference. "
+            "Note: the pH scale is logarithmic — what does a drop of 0.3 mean for the H⁺ concentration?"
+        ),
+        "task_2": (
+            "In the speciation panel, describe how the shares of CO₂(aq), HCO₃⁻ and CO₃²⁻ change as CO₂ rises. "
+            "Which species dominates in seawater, and why?"
+        ),
+        "task_3": (
+            "Determine from the Ω plot the pCO₂ at which Ω drops below 1, and explain what this means "
+            "for corals and shellfish."
+        ),
+        "task_4": (
+            "Compare the ocean and Baltic Sea scenarios: explain, using alkalinity, why the same CO₂ increase "
+            "changes the pH differently."
+        ),
+        "task_5": (
+            "Use the warming experiment to explain, with Le Chatelier's principle, why warm water holds less CO₂."
+        ),
         "expl_alkalinity": (
             "Total alkalinity describes the seawater's capacity to neutralize acids (buffering capacity). "
             "It increases e.g. through weathering of carbonate rock."
@@ -133,6 +188,62 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "experiments": "Le-Chatelier-Experimente",
         "experiments_hint": "Geführte Störungen: Der vorherige Zustand bleibt als graue Vergleichslinie sichtbar.",
         "exp_end": "Experiment beenden",
+        "nav_home": "Explorer",
+        "nav_teachers": "Für Lehrkräfte",
+        "school_scenarios": "Wähle ein Thema",
+        "school_explore": "Ausprobieren",
+        "school_intro": "Wähle ein Thema und probiere aus: Zieh am Temperaturregler und beobachte die Diagramme.",
+        "school_question": "Frage",
+        "to_school_mode": "Schulmodus",
+        "to_pro_mode": "Vollmodus",
+        "teachers_title": "CO2RAL im Unterricht",
+        "teachers_intro": (
+            "CO2RAL modelliert das marine Karbonatsystem — ein realer Kontext, der den gesamten Lehrplanbereich "
+            "des chemischen Gleichgewichts abdeckt. Jeder Link unten öffnet einen fertigen Zustand der App; "
+            "kopiere ihn in dein Arbeitsblatt oder deine Lernplattform."
+        ),
+        "teachers_curriculum": "Lehrplanbezug",
+        "teachers_concept": "Konzept",
+        "teachers_where": "Wo in CO2RAL",
+        "teachers_lessons": "Fertige Unterrichts-Links",
+        "teachers_tasks": "Aufgabenvorschläge",
+        "teachers_school_entry": "Schulmodus (reduzierte Oberfläche)",
+        "teachers_note_title": "Gut zu wissen",
+        "teachers_note": (
+            "Alle Einstellungen stecken in der URL — jeder selbst gebaute Zustand lässt sich als Link weitergeben. "
+            "Diagramme können als PNG heruntergeladen werden, die zugrunde liegenden Werte als CSV "
+            "(Semikolon und Dezimalkomma in der deutschen Version, öffnet direkt in Excel)."
+        ),
+        "curr_dynamic": "Gleichgewicht als dynamischer Zustand",
+        "curr_dynamic_where": "Speziesverteilung: Die Anteile verschieben sich, das System bleibt im Gleichgewicht",
+        "curr_lechatelier": "Le Chatelier: Konzentration und Temperatur",
+        "curr_lechatelier_where": "Geführte Experimente: CO₂-Eintrag, Erwärmung, Kalkzugabe",
+        "curr_acidbase": "Säure-Base-Gleichgewichte, pK-Werte",
+        "curr_acidbase_where": "Bjerrum-Diagramm mit pK₁- und pK₂-Markern",
+        "curr_solubility": "Löslichkeitsgleichgewicht",
+        "curr_solubility_where": "Sättigungszustände Ω mit der Schwelle Ω = 1",
+        "curr_buffer": "Puffersysteme",
+        "curr_buffer_where": "Puffer-Experiment: Meerwasser vs. alkalinitätsarmes Wasser",
+        "task_1": (
+            "Lies den pH-Wert für 280, 420 und 1000 μatm pCO₂ ab und berechne die Differenz. "
+            "Beachte: Die pH-Skala ist logarithmisch — was bedeutet ein Abfall um 0,3 für die H⁺-Konzentration?"
+        ),
+        "task_2": (
+            "Beschreibe anhand der Speziesverteilung, wie sich die Anteile von CO₂(aq), HCO₃⁻ und CO₃²⁻ bei "
+            "steigendem CO₂ verändern. Welche Spezies überwiegt im Meerwasser, und warum?"
+        ),
+        "task_3": (
+            "Bestimme aus dem Ω-Diagramm den pCO₂-Wert, bei dem Ω unter 1 fällt, und erkläre, was das für "
+            "Korallen und Muscheln bedeutet."
+        ),
+        "task_4": (
+            "Vergleiche die Szenarien Ozean und Ostsee: Erkläre mithilfe der Alkalinität, warum derselbe "
+            "CO₂-Anstieg den pH unterschiedlich stark verändert."
+        ),
+        "task_5": (
+            "Erkläre mit dem Prinzip von Le Chatelier anhand des Erwärmungs-Experiments, warum warmes Wasser "
+            "weniger CO₂ aufnehmen kann."
+        ),
         "expl_alkalinity": (
             "Die Gesamtalkalität beschreibt die Fähigkeit des Meerwassers, Säuren zu neutralisieren "
             "(Puffervermögen). Sie steigt z. B. durch Verwitterung von Kalkgestein."

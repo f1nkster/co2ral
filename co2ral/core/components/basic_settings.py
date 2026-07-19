@@ -7,7 +7,7 @@ from core.utils.marine_model import (
     SYSTEM_PARAMS,
     MarineModelParameter,
 )
-from core.utils.presets import get_preset_options
+from core.utils.presets import SCHOOL_PRESETS, get_preset_options
 from core.utils.settings import Settings
 from dash import dcc, html
 from dash_iconify import DashIconify
@@ -38,14 +38,52 @@ def create_par1_slider(param: MarineModelParameter, value: float, lang: str) -> 
     )
 
 
+def create_school_scenarios(lang: str) -> list:
+    """Creates the everyday scenario buttons shown in school mode.
+
+    :param lang: Language for labels.
+    :return: List of components: heading, intro text and one link button per scenario.
+    """
+    dictionary = TRANSLATION_DICT[lang]
+    components = [
+        sel.badge(dictionary["school_scenarios"]),
+        dmc.Text(dictionary["school_intro"], size="xs", c="dimmed", mb=4),
+    ]
+    for preset in SCHOOL_PRESETS:
+        components.append(
+            html.A(
+                dmc.Button(
+                    preset.label[lang],
+                    variant="light",
+                    size="md",
+                    color=DMC_TEAL,
+                    fullWidth=True,
+                    styles={"label": {"whiteSpace": "normal", "textAlign": "left"}},
+                    leftSection=DashIconify(icon="mdi:earth", width=20),
+                ),
+                href=f"/?{preset.settings.to_query()}&scen={preset.name}&mode=schule&lang={lang}",
+                style={"textDecoration": "none"},
+            )
+        )
+    components.append(dbc.Row(style={"height": "10px"}))
+    return components
+
+
 def create_basic_settings(
-    lang: str = "de", settings: Settings | None = None, comparison_active: bool = False
+    lang: str = "de",
+    settings: Settings | None = None,
+    comparison_active: bool = False,
+    school_mode: bool = False,
 ) -> dmc.Accordion:
     """Create the basic settings accordion for the marine model.
+
+    In school mode the technical controls stay mounted (all dash callbacks reference their ids)
+    but are hidden, so only the everyday scenarios and a few explorable controls remain visible.
 
     :param lang: Language for labels, either "de" or "en".
     :param settings: Initial values for all controls; defaults are used if None.
     :param comparison_active: Whether the comparison mode starts active (e.g. in an experiment).
+    :param school_mode: Whether to render the reduced school interface.
     :return: The basic settings accordion component.
     """
     settings = settings or Settings()
@@ -58,9 +96,15 @@ def create_basic_settings(
     par1 = SYSTEM_PARAMS.get_param_by_name(settings.par1_name)
     content = []
 
+    if school_mode:
+        content.extend(create_school_scenarios(lang=lang))
+
+    # Everything from here to the plot settings is technical detail, hidden in school mode.
+    technical = []
+
     # Scenario presets
-    content.append(sel.badge(dictionary["scenarios"]))
-    content.append(
+    technical.append(sel.badge(dictionary["scenarios"]))
+    technical.append(
         dmc.Select(
             id="preset-dd",
             data=get_preset_options(lang),
@@ -70,14 +114,14 @@ def create_basic_settings(
             style={"width": "100%"},
         )
     )
-    content.append(dbc.Row(style={"height": "10px"}))
+    technical.append(dbc.Row(style={"height": "10px"}))
 
     # Guided Le Chatelier experiments: links that load a disturbed state with the
     # baseline frozen as comparison.
-    content.append(sel.badge(dictionary["experiments"]))
-    content.append(dmc.Text(dictionary["experiments_hint"], size="xs", c="dimmed"))
+    technical.append(sel.badge(dictionary["experiments"]))
+    technical.append(dmc.Text(dictionary["experiments_hint"], size="xs", c="dimmed"))
     for experiment in EXPERIMENTS:
-        content.append(
+        technical.append(
             html.A(
                 dmc.Button(
                     experiment.label[lang],
@@ -92,11 +136,11 @@ def create_basic_settings(
                 style={"textDecoration": "none"},
             )
         )
-    content.append(dbc.Row(style={"height": "10px"}))
+    technical.append(dbc.Row(style={"height": "10px"}))
 
     # Model settings
-    content.append(sel.badge(dictionary["model_settings"]))
-    content.append(
+    technical.append(sel.badge(dictionary["model_settings"]))
+    technical.append(
         sel.dropdown_with_title(
             dictionary["fixed_parameter"],
             id="par1-dd",
@@ -105,14 +149,14 @@ def create_basic_settings(
             value=settings.par1_name,
         )
     )
-    content.append(
+    technical.append(
         dmc.Box(create_par1_slider(param=par1, value=settings.par1_value, lang=lang), id="slider-par1-container")
     )
-    content.append(dbc.Row(style={"height": "30px"}))
+    technical.append(dbc.Row(style={"height": "30px"}))
 
     # Plot settings
-    content.append(sel.badge(dictionary["plot_settings"]))
-    content.append(
+    technical.append(sel.badge(dictionary["plot_settings"]))
+    technical.append(
         sel.dropdown_with_title(
             dictionary["x_axis_parameter"],
             id="par2-dd",
@@ -121,7 +165,7 @@ def create_basic_settings(
             value=settings.par2_name,
         )
     )
-    content.append(
+    technical.append(
         dmc.MultiSelect(
             label=dictionary["y_axis_parameter"],
             description=dictionary["y_axis_parameter_description"],
@@ -134,6 +178,9 @@ def create_basic_settings(
             style={"width": "100%"},
         )
     )
+
+    content.append(dmc.Box(technical, className="school-hidden" if school_mode else None))
+
     content.append(
         dmc.Switch(
             id="bjerrum-switch",
@@ -203,6 +250,17 @@ def create_basic_settings(
             ],
             justify="space-between",
             mt=8,
+        )
+    )
+
+    # Mode switch: a plain link, so the target mode is reached with clean default settings.
+    content.append(
+        dmc.Anchor(
+            dictionary["to_pro_mode"] if school_mode else dictionary["to_school_mode"],
+            href=f"/?lang={lang}" if school_mode else f"/?mode=schule&lang={lang}",
+            size="xs",
+            c="dimmed",
+            mt=4,
         )
     )
 

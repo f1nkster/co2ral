@@ -47,14 +47,19 @@ Fundament: Das Gleichgewicht soll *unmittelbar* auf Eingriffe reagieren.
 
 ## Phase 3 — Schultauglichkeit
 
-- [ ] **Schulmodus (M)** — eigener Einstieg (z. B. `?mode=schule`): reduzierte Oberfläche
-      (nur pCO₂- und Temperatur-Regler, Rest sinnvoll fixiert), vereinfachte Sprache in den
-      Erklärtexten, größere Bedienelemente. Kein „Feature-Abbau", sondern didaktische Reduktion.
-- [ ] **Alltags-Szenarien (S)** — Presets mit Schulbezug: „Sprudelflasche öffnen",
-      „Aquarium im Sommer", „Ozean 1850 / heute / 2100", „Muschelschale in saurem Wasser".
-- [ ] **Materialseite für Lehrkräfte (M)** — eigene Seite mit fertigen Unterrichts-Links
-      (Share-URLs je Szenario), Aufgabenvorschlägen und Lehrplanbezug; später Arbeitsblätter
-      als PDF.
+- [x] **Schulmodus (M)** — eigener Einstieg über `?mode=schule`: reduzierte Oberfläche
+      (Themenwahl + Temperaturregler sichtbar, technische Steuerung ausgeblendet — alle
+      Komponenten bleiben gemountet, weil die Callbacks ihre IDs brauchen), Sektion
+      „Ausprobieren" standardmäßig offen, Moduswechsel per Link. Didaktische Reduktion
+      statt Feature-Abbau; der Modus bleibt bei Reset, Sprachwechsel und Teilen erhalten.
+- [x] **Alltags-Szenarien (S)** — vier Themen mit Leitfrage in einfacher Sprache:
+      „Der Ozean: früher, heute, morgen", „Warmes Meer, kaltes Meer", „Korallen in Gefahr",
+      „Ostsee: empfindlicher als der Ozean?". Die Leitfrage erscheint als Banner über den
+      Diagrammen (`scen=`-Parameter).
+- [x] **Materialseite für Lehrkräfte (M)** — eigene Seite `/lehrkraefte` mit
+      Lehrplanbezugs-Tabelle (Konzept → wo in CO2RAL), fertigen Unterrichts-Links
+      (Schulmodus, alle Szenarien und Experimente), fünf Aufgabenvorschlägen und
+      Hinweisen zu Teilen/Export; später Arbeitsblätter als PDF.
 - [ ] **Aufgaben-/Lernpfadmodus (L)** — geführte Erkundungen in der App
       („Stelle pCO₂ auf 280 μatm. Beobachte Ω. Was bedeutet das für Korallen?") mit
       Schritt-Karten. Größtes Einzel-Feature, lohnt erst nach Phase 1+2.

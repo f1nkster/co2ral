@@ -606,6 +606,11 @@ textarea {
     }
 }
 
+/* School mode: technical controls stay mounted (dash callbacks need them) but are hidden. */
+.school-hidden {
+    display: none !important;
+}
+
 /* Info disclosure (details/summary) for parameter explanations */
 .info-summary {
     list-style: none;

@@ -1,7 +1,7 @@
 import urllib.parse
 
 from core.utils.experiments import EXPERIMENTS, get_experiment_by_name
-from core.utils.presets import PRESETS, get_preset_options
+from core.utils.presets import PRESETS, SCHOOL_PRESETS, get_preset_options, get_school_preset_by_name
 from core.utils.settings import Settings
 
 
@@ -158,6 +158,32 @@ def test__presets__roundtrip_through_query():
     for preset in PRESETS:
         parsed = Settings.from_query(_parse(preset.settings.to_query()))
         assert parsed == preset.settings, f"preset {preset.name} does not survive the url roundtrip"
+
+
+def test__school_presets__roundtrip_labels_and_questions():
+    """GIVEN all school scenarios
+    WHEN their settings are serialized and parsed back
+    THEN they survive unchanged and every scenario has a label and a guiding question
+         in both languages
+    """
+    for preset in SCHOOL_PRESETS:
+        parsed = Settings.from_query(_parse(preset.settings.to_query()))
+        assert parsed == preset.settings, f"school scenario {preset.name} does not survive the url roundtrip"
+
+        assert preset.question is not None, f"school scenario {preset.name} has no guiding question"
+        for lang in ("de", "en"):
+            assert preset.label[lang]
+            assert preset.question[lang]
+
+
+def test__get_school_preset_by_name__lookup():
+    """GIVEN the school scenario registry
+    WHEN scenarios are looked up by name
+    THEN known names resolve and unknown names return None
+    """
+    assert get_school_preset_by_name("ocean_past_future") is SCHOOL_PRESETS[0]
+    assert get_school_preset_by_name("does-not-exist") is None
+    assert get_school_preset_by_name(None) is None
 
 
 def test__presets__provide_labels_in_both_languages():

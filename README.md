@@ -13,6 +13,9 @@ for the [Chair of Chemistry Education at FAU](https://www.chemiedidaktik.phil.fa
   one over a range; plot any of the other parameters (incl. CO₃²⁻, HCO₃⁻ and the
   aragonite/calcite saturation states Ω with a reference line at Ω = 1) against it
 * Didactic scenario presets (ocean acidification, coral reef, North Sea, Baltic Sea)
+* Guided Le Chatelier experiments and an optional Bjerrum plot with pK₁/pK₂ markers
+* School mode (`?mode=schule`): reduced interface, everyday scenarios with guiding
+  questions, plus a teacher page at `/lehrkraefte` with curriculum links and tasks
 * Shareable urls: all settings are encoded as query parameters (copy via the share icon)
 * Localized in German and English (`?lang=de` / `?lang=en`)
 * Download plots as PNG including the fixed model conditions, or all results as CSV
