@@ -201,3 +201,6 @@ __marimo__/
 
 .DS_store
 .vscode
+
+# University logos are not distributed with the source; place them on the server manually.
+co2ral/assets/fau-logo.*

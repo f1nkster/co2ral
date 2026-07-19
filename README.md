@@ -29,23 +29,6 @@ for the [Chair of Chemistry Education at FAU](https://www.chemiedidaktik.phil.fa
 * Responsive layout for tablets and phones
 * All stylesheets and fonts are served locally (no CDN or Google Fonts requests)
 
-## Development
-
-```bash
-poetry install
-cd co2ral
-poetry run python serve.py   # production server (waitress) on http://127.0.0.1:8050
-poetry run python __main__.py --debug   # dev server with debug mode
-```
-
-Run tests and linting:
-
-```bash
-poetry run pytest
-poetry run ruff check co2ral tests
-poetry run ruff format --check co2ral tests
-```
-
 ## Open Points
 
 * Nutrients to add: Ammonia: 0 - 1

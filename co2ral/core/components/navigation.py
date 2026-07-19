@@ -1,3 +1,4 @@
+import pathlib
 import urllib.parse
 
 import dash
@@ -21,6 +22,25 @@ ui_link = "https://github.com/f1nkster/co2ral"
 # The carbonate chemistry itself is computed by PyCO2SYS; the footer credits it.
 PYCO2SYS_REPO = "https://github.com/mvdh7/PyCO2SYS"
 PYCO2SYS_DOCS = "https://pyco2sys.readthedocs.io/"
+
+# The university logo is not part of the repository (see .gitignore) and has to be placed
+# in the assets folder on each machine. Any file extension works.
+ASSETS_DIR = pathlib.Path(__file__).resolve().parents[2] / "assets"
+PARTNER_LOGO_STEM = "fau-logo"
+FALLBACK_LOGO = "/assets/LogoChemiedidaktik.svg"
+
+
+def get_partner_logo_src() -> str:
+    """Finds the university logo in the assets folder.
+
+    Resolved per call, so the logo appears as soon as the file is dropped in, without
+    restarting the app. Falls back to the chair logo while no file is present.
+
+    :return: Asset url of the logo to display.
+    """
+    for candidate in sorted(ASSETS_DIR.glob(f"{PARTNER_LOGO_STEM}.*")):
+        return f"/assets/{candidate.name}"
+    return FALLBACK_LOGO
 
 
 def get_lang_from_search(search: str) -> str:
@@ -111,18 +131,19 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
         gap=4,
     )
 
-    # Logo from assets
+    # University logo, resolved from the assets folder.
     logo_cd = html.A(
         [
             html.Img(
-                src="/assets/LogoChemiedidaktik.svg",
-                height="40px",
+                src=get_partner_logo_src(),
+                alt="FAU Erlangen-Nürnberg",
+                height="34px",
                 style={"marginRight": "12px"},
             )
         ],
         href="https://www.chemiedidaktik.phil.fau.de/",
-        style={"width": "auto", "right": "23px"},
-        className="ms-auto d-none d-md-block",
+        style={"width": "auto"},
+        className="d-none d-md-block",
     )
 
     # Theme Switching
@@ -139,8 +160,8 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
                 color="rgba(39, 174, 96 , 0.2)",
             ),
         ],
-        className="g-0 ms-auto flex-nowrap mt-3 mt-md-0",
-        style={"width": "auto", "position": "relative", "right": "23px"},
+        className="g-0 flex-nowrap mt-3 mt-md-0",
+        style={"width": "auto", "marginRight": "12px"},
     )
 
     # Git Logo
@@ -186,11 +207,13 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
     )
     dropdowns = dbc.Stack(nav_items, direction="horizontal", gap=3)
 
+    # Pushed right by ms-auto and laid out in the normal flow: absolute positioning made
+    # the links overlap the university logo.
     panels = html.Div(
         id="navbar-dropdowns",
         className="g-0 ms-auto flex-nowrap mt-3 mt-md-0 d-none d-lg-block",
         children=dropdowns,
-        style={"width": "auto", "position": "absolute", "right": "240px"},
+        style={"width": "auto", "marginRight": "16px"},
     )
 
     lang_switch = dmc.SegmentedControl(
