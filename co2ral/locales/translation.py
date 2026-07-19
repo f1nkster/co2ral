@@ -89,6 +89,33 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "ocean_today": "today",
         "ocean_2100": "possible 2100",
         "ocean_jump": "Jump to:",
+        "predict_toggle": "Prediction mode",
+        "predict_toggle_hint": "Guess first, then see the values",
+        "predict_q_ph": "What happens to the pH?",
+        "predict_q_co2": "What happens to the dissolved CO₂?",
+        "predict_up": "it rises",
+        "predict_same": "it stays the same",
+        "predict_down": "it falls",
+        "predict_correct": "Correct!",
+        "predict_wrong": "Not quite.",
+        "predict_wait": "Make your guess — then the values appear.",
+        "predict_expl_ph_down": "More CO₂ dissolves in the water and forms H⁺ ions — the pH falls.",
+        "predict_expl_ph_up": "Less CO₂ in the water means fewer H⁺ ions — the pH rises.",
+        "predict_expl_co2_down": "Warm water dissolves less gas, so less CO₂ stays in the water.",
+        "predict_expl_co2_up": "Cold water dissolves more gas, so more CO₂ stays in the water.",
+        "predict_expl_same": "Almost nothing changes here.",
+        "particles_title": "A look inside the water: the particles",
+        "particles_intro": (
+            "This is how the carbon particles are distributed in this sample. Watch the particles "
+            "that change colour: they keep converting into one another."
+        ),
+        "particles_note": (
+            "The number of each kind stays the same — and yet the forward and reverse reactions "
+            "never stop. That is exactly what a dynamic equilibrium is."
+        ),
+        "particles_counts": "Particles shown",
+        "particles_real_share": "Real shares",
+        "particles_min_note": "CO₂ is so rare that it is shown here with at least one particle.",
         "school_intro": "Pick a topic, then explore: drag the temperature slider and watch the charts respond.",
         "school_question": "Question",
         "to_school_mode": "School mode",
@@ -262,6 +289,33 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "ocean_today": "heute",
         "ocean_2100": "mögliche 2100",
         "ocean_jump": "Springe zu:",
+        "predict_toggle": "Vorhersage-Modus",
+        "predict_toggle_hint": "Erst tippen, dann die Werte sehen",
+        "predict_q_ph": "Was passiert mit dem pH-Wert?",
+        "predict_q_co2": "Was passiert mit dem gelösten CO₂?",
+        "predict_up": "er steigt",
+        "predict_same": "er bleibt gleich",
+        "predict_down": "er sinkt",
+        "predict_correct": "Richtig!",
+        "predict_wrong": "Nicht ganz.",
+        "predict_wait": "Gib zuerst deinen Tipp ab — dann erscheinen die Werte.",
+        "predict_expl_ph_down": "Mehr CO₂ löst sich im Wasser und bildet H⁺-Ionen — der pH sinkt.",
+        "predict_expl_ph_up": "Weniger CO₂ im Wasser bedeutet weniger H⁺-Ionen — der pH steigt.",
+        "predict_expl_co2_down": "Warmes Wasser löst weniger Gas, also bleibt weniger CO₂ im Wasser.",
+        "predict_expl_co2_up": "Kaltes Wasser löst mehr Gas, also bleibt mehr CO₂ im Wasser.",
+        "predict_expl_same": "Hier ändert sich so gut wie nichts.",
+        "particles_title": "Blick ins Wasser: die Teilchen",
+        "particles_intro": (
+            "So sind die Kohlenstoff-Teilchen in dieser Wasserprobe verteilt. Beobachte die Teilchen, "
+            "die ihre Farbe wechseln: Sie wandeln sich ständig ineinander um."
+        ),
+        "particles_note": (
+            "Die Anzahl jeder Sorte bleibt gleich — trotzdem laufen Hin- und Rückreaktion "
+            "ununterbrochen weiter. Genau das ist ein dynamisches Gleichgewicht."
+        ),
+        "particles_counts": "Teilchen im Bild",
+        "particles_real_share": "Tatsächliche Anteile",
+        "particles_min_note": "CO₂ ist so selten, dass es hier mit mindestens einem Teilchen gezeigt wird.",
         "school_intro": "Wähle ein Thema und probiere aus: Zieh am Temperaturregler und beobachte die Diagramme.",
         "school_question": "Frage",
         "to_school_mode": "Schulmodus",

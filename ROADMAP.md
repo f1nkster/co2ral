@@ -70,11 +70,26 @@ Fundament: Das Gleichgewicht soll *unmittelbar* auf Eingriffe reagieren.
       („Stelle pCO₂ auf 280 μatm. Beobachte Ω. Was bedeutet das für Korallen?") mit
       Schritt-Karten. Größtes Einzel-Feature, lohnt erst nach Phase 1+2.
 
+## Phase 3.5 — Aktives Lernen
+
+- [x] **Vorhersage-Modus (M)** — zuschaltbar (Schalter oder `?predict=1`): Nach jeder
+      Reglerbewegung werden alle Wasserwerte verdeckt und eine Frage gestellt
+      („Was passiert mit dem pH?"). Erst nach dem Tipp erscheinen die Werte, zusammen mit
+      Rückmeldung und einer fachlichen Begründung. Der CO₂-Regler fragt nach dem pH,
+      der Temperaturregler nach dem gelösten CO₂.
+- [ ] **Selbstkontrolle mit erklärendem Feedback (M)** — eingebettete Verständnisfragen
+      pro Szenario, Feedback verweist auf die passende Stelle im Bild.
+- [ ] **Beobachtungs-Box (S)** — Lernende formulieren in einem Satz, was sie sehen;
+      Export der eigenen Notizen als kleines Forschungsheft.
+- [ ] **Brücke Bild → Diagramm (S)** — geführter Übergang von der Ozean-Ansicht zur Kurve.
+
 ## Phase 4 — Kür & Technik
 
-- [ ] **Teilchen-Animation „dynamisches Gleichgewicht" (L)** — qualitative Animation
-      (Hin- und Rückreaktion laufen weiter, Konzentrationen bleiben konstant) gegen die
-      Fehlvorstellung „im Gleichgewicht passiert nichts".
+- [x] **Teilchen-Animation „dynamisches Gleichgewicht" (L)** — Teilchenmodell unter der
+      Ozean-Ansicht: 40 Teilchen im realen Mengenverhältnis von CO₂(aq), HCO₃⁻ und CO₃²⁻;
+      einzelne Paare wandeln sich sichtbar ineinander um, laufen dabei aber gegenphasig,
+      sodass die Anzahl jeder Sorte konstant bleibt — gegen die Fehlvorstellung
+      „im Gleichgewicht passiert nichts".
 - [ ] **Icons lokal bündeln (S)** — DashIconify lädt zur Laufzeit von api.iconify.design;
       letzter externer Request (Datenschutz).
 - [ ] **Datenschutzerklärung (S)** — eigene Seite; für Schuleinsatz relevant.

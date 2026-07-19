@@ -174,7 +174,9 @@ def _value_card(label: str, value: str, unit: str, delta: tuple[str, str], lang:
                     dmc.Text(TRANSLATION_DICT[lang]["ocean_vs_1850"], size="xs", c=_TEXT_MUTED),
                 ],
                 gap=4,
-            ),
+            )
+            if delta_text
+            else None,
             dmc.Text(note, size="xs", c=_TEXT_MUTED) if note else None,
         ],
         p="xs",
@@ -185,18 +187,21 @@ def _value_card(label: str, value: str, unit: str, delta: tuple[str, str], lang:
     )
 
 
-def _coral_status(omega: float, lang: str) -> Component:
+def _coral_status(omega: float, lang: str, hidden: bool = False) -> Component:
     """Builds the sea floor with a coral whose color reflects the aragonite saturation,
        together with the plain language verdict.
 
     :param omega: Aragonite saturation state.
     :param lang: Selected language.
+    :param hidden: While a prediction is pending, the verdict must not give the answer away.
     :return: Sea floor band closing the scene at the bottom.
     """
     dictionary = TRANSLATION_DICT[lang]
+    if hidden:
+        text, coral_color = dictionary["predict_wait"], "#ced4da"
     # Vivid pink when calcification works, pale when it gets harder, gray skeleton when
     # calcium carbonate dissolves. Gray rather than white, so it stays visible on the sand.
-    if omega >= 3:
+    elif omega >= 3:
         text, coral_color = dictionary["ocean_coral_good"], "#e64980"
     elif omega >= 1:
         text, coral_color = dictionary["ocean_coral_hard"], "#ffa8a8"
@@ -224,7 +229,7 @@ def _coral_status(omega: float, lang: str) -> Component:
     )
 
 
-def create_ocean_view(value_pco2: float, value_temperature: float, lang: str = "de") -> Component:
+def create_ocean_view(value_pco2: float, value_temperature: float, lang: str = "de", hidden: bool = False) -> Component:
     """Builds the pictorial ocean view: a sky whose haze and CO2 markers grow with the CO2
        level, above a water body showing the resulting values.
 
@@ -234,6 +239,7 @@ def create_ocean_view(value_pco2: float, value_temperature: float, lang: str = "
     :param value_pco2: CO2 partial pressure in the air, in μatm.
     :param value_temperature: Water temperature in °C.
     :param lang: Selected language.
+    :param hidden: Masks all water values while a prediction is pending.
     :return: The complete picture as a component.
     """
     dictionary = TRANSLATION_DICT[lang]
@@ -387,6 +393,9 @@ def create_ocean_view(value_pco2: float, value_temperature: float, lang: str = "
         ),
     ]
 
+    if hidden:
+        cards = [(label, "?", "", ("", _DELTA_COLORS["none"]), "") for label, *_ in cards]
+
     water = html.Div(
         [
             html.Div(className="ocean-rays"),
@@ -422,7 +431,7 @@ def create_ocean_view(value_pco2: float, value_temperature: float, lang: str = "
                 className="ocean-content",
                 style={"padding": "16px 16px 0"},
             ),
-            _coral_status(current["saturation_aragonite"], lang),
+            _coral_status(current["saturation_aragonite"], lang, hidden=hidden),
         ],
         className="ocean-water",
         style={"background": _WATER_GRADIENT},

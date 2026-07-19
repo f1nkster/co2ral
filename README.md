@@ -18,6 +18,10 @@ for the [Chair of Chemistry Education at FAU](https://www.chemiedidaktik.phil.fa
   questions, plus a teacher page at `/lehrkraefte` with curriculum links and tasks
 * Pictorial ocean view at `/ozean`: sky with CO₂ and water body with the resulting
   values, each shown as a change relative to 1850 — no chart reading required
+* Particle model below the scene: the amounts hold while individual particles keep
+  converting, showing that the equilibrium is dynamic
+* Optional prediction mode (`?predict=1`): the values are masked until the student has
+  guessed what a slider change will do, then revealed with an explanation
 * Shareable urls: all settings are encoded as query parameters (copy via the share icon)
 * Localized in German and English (`?lang=de` / `?lang=en`)
 * Download plots as PNG including the fixed model conditions, or all results as CSV
