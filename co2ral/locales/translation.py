@@ -34,6 +34,12 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "no_yaxis_warning": "Please select at least one y-axis parameter to create plots.",
         "context_fixed": "Fixed",
         "omega_hint": "Ω > 1: calcification possible · Ω < 1: calcium carbonate dissolves",
+        "speciation_title": "DIC speciation",
+        "speciation_hint": "Share of CO₂(aq), HCO₃⁻ and CO₃²⁻ in dissolved inorganic carbon — watch the equilibrium shift",
+        "compare_start": "Save current state for comparison",
+        "compare_stop": "End comparison",
+        "comparison_suffix": " (comparison)",
+        "comparison_prefix": "Comparison",
         "expl_alkalinity": (
             "Total alkalinity describes the seawater's capacity to neutralize acids (buffering capacity). "
             "It increases e.g. through weathering of carbonate rock."
@@ -99,6 +105,12 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "no_yaxis_warning": "Bitte wähle mindestens einen Y-Achsen-Parameter aus, um Diagramme zu erstellen.",
         "context_fixed": "Fest",
         "omega_hint": "Ω > 1: Kalkbildung möglich · Ω < 1: Kalk löst sich auf",
+        "speciation_title": "Speziesverteilung im DIC",
+        "speciation_hint": "Anteile von CO₂(aq), HCO₃⁻ und CO₃²⁻ am gelösten anorganischen Kohlenstoff — beobachte, wie sich das Gleichgewicht verschiebt",
+        "compare_start": "Aktuellen Zustand für Vergleich merken",
+        "compare_stop": "Vergleich beenden",
+        "comparison_suffix": " (Vergleich)",
+        "comparison_prefix": "Vergleich",
         "expl_alkalinity": (
             "Die Gesamtalkalität beschreibt die Fähigkeit des Meerwassers, Säuren zu neutralisieren "
             "(Puffervermögen). Sie steigt z. B. durch Verwitterung von Kalkgestein."

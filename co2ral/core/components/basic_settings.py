@@ -10,7 +10,7 @@ from core.utils.presets import get_preset_options
 from core.utils.settings import Settings
 from dash import dcc
 from dash_iconify import DashIconify
-from env.colors import DMC_GRAY, DMC_LIME, DMC_RED
+from env.colors import DMC_GRAY, DMC_LIME, DMC_RED, DMC_TEAL
 from locales.translation import TRANSLATION_DICT
 
 
@@ -123,6 +123,12 @@ def create_basic_settings(lang: str = "de", settings: Settings | None = None) ->
         "ph:play-duotone",
         color=DMC_LIME,
     )
+    compare_button = sel.button(
+        "freeze-btn",
+        dictionary["compare_start"],
+        "mdi:compare-horizontal",
+        color=DMC_TEAL,
+    )
     buttons = dmc.Stack(
         [
             dbc.Row(
@@ -131,6 +137,7 @@ def create_basic_settings(lang: str = "de", settings: Settings | None = None) ->
                     dbc.Col(apply_button, width=6),
                 ]
             ),
+            dbc.Row(dbc.Col(compare_button, width=12), className="g-0 mt-1"),
         ]
     )
     content.append(buttons)

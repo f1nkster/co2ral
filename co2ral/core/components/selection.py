@@ -162,6 +162,9 @@ def range_slider(
                 marks=labelled_marks,
                 labelAlwaysOn=True,
                 mt=28,
+                # Update the value only when the user releases the handle, so live plot
+                # updates trigger exactly one computation per adjustment.
+                updatemode="mouseup",
             ),
         ]
     )

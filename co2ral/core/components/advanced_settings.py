@@ -34,6 +34,7 @@ def create_advanced_settings(lang: str = "de", settings: Settings | None = None)
                 value=settings.par2_min,
                 min=0,
                 step=1,
+                debounce=500,
                 style={"width": "100%"},
             ),
             dmc.NumberInput(
@@ -42,6 +43,7 @@ def create_advanced_settings(lang: str = "de", settings: Settings | None = None)
                 value=settings.par2_max,
                 min=0,
                 step=1,
+                debounce=500,
                 style={"width": "100%"},
             ),
             dmc.NumberInput(
@@ -51,6 +53,7 @@ def create_advanced_settings(lang: str = "de", settings: Settings | None = None)
                 min=1,
                 step=1,
                 max=25,
+                debounce=500,
                 style={"width": "100%"},
             ),
         ],

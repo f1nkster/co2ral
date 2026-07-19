@@ -1,6 +1,6 @@
 import numpy as np
-from core.utils.charts import create_line_chart, create_line_chart_figure
-from core.utils.marine_model import DIC, OMEGA_ARAGONITE, PCO2, PH
+from core.utils.charts import create_line_chart, create_line_chart_figure, create_speciation_chart
+from core.utils.marine_model import DIC, OMEGA_ARAGONITE, PCO2, PH, SPECIATION_PARAMS
 
 
 def _fake_results() -> dict:
@@ -48,6 +48,50 @@ def test__create_line_chart__saturation_param_gets_omega_reference_line():
     assert len(omega_chart.referenceLines) == 1
     assert omega_chart.referenceLines[0]["y"] == 1
     assert ph_chart.referenceLines == []
+
+
+def test__create_line_chart__comparison_adds_second_series():
+    """GIVEN a frozen comparison result on the same x grid
+    WHEN the line chart is created
+    THEN every data row contains both values and a gray comparison series is added
+    """
+    current = _fake_results()
+    frozen = {"par2": current["par2"], "pH": np.linspace(8.2, 7.4, 5)}
+
+    chart = create_line_chart(
+        model_results=current,
+        par_xaxis=DIC,
+        par_yaxis=PH,
+        lang="de",
+        comparison_results=frozen,
+        comparison_suffix=" (Vergleich)",
+    )
+
+    assert len(chart.series) == 2
+    assert chart.series[1]["name"] == "pH (Vergleich)"
+    assert chart.series[1]["color"] == "gray.6"
+    assert chart.data[0]["pH (Vergleich)"] == 8.2
+
+
+def test__create_speciation_chart__stacks_all_three_species_to_percent():
+    """GIVEN model results with all three DIC species
+    WHEN the speciation chart is created
+    THEN it is a 100 % stacked area chart with one series per species
+    """
+    results = {
+        "par2": np.linspace(1800, 2400, 5),
+        "CO2": np.linspace(10, 40, 5),
+        "HCO3": np.linspace(1600, 2100, 5),
+        "CO3": np.linspace(220, 90, 5),
+    }
+
+    chart = create_speciation_chart(model_results=results, par_xaxis=DIC, lang="de")
+
+    assert chart.type == "percent"
+    assert len(chart.series) == len(SPECIATION_PARAMS)
+    assert chart.data[0]["CO₂(aq)"] == 10
+    assert chart.data[0]["HCO₃⁻"] == 1600
+    assert chart.data[0]["CO₃²⁻"] == 220
 
 
 def test__create_line_chart_figure__sets_context_line_as_title():

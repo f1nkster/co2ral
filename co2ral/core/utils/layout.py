@@ -13,16 +13,34 @@ def plot_cell(
     title: str,
     plot: Union[dash_echarts.DashECharts, dmc.Card],
     style: dict = {"width": "100%", "margin-bottom": "20px"},
-    subtitle: Union[None, str] = None,
+    subtitle: Union[None, str, list] = None,
+    with_download: bool = True,
 ) -> html.Div:
     """Creates a plot cell for given title and plot.
 
     :param title: cell title
     :param plot: cell plot
     :param style: style for the overall cell container
-    :param subtitle: context line with the fixed model conditions, shown above the plot
+    :param subtitle: context line(s) with the fixed model conditions, shown above the plot
+    :param with_download: whether to render the PNG download button in the title bar
     :return: html.Div containing cell title and plot
     """
+    download_button = (
+        html.Button(
+            dmc.ActionIcon(
+                children=DashIconify(icon="lucide:download"),
+                color=colors.DMC_THEME,
+                variant="subtle",
+                size="lg",
+            ),
+            id={"type": "download-btn", "index": plot.id},
+            n_clicks=0,
+            style={"background": "none", "border": "none", "padding": 0, "cursor": "pointer"},
+        )
+        if with_download
+        else None
+    )
+
     title_container = dmc.Badge(
         title,
         style={
@@ -39,17 +57,7 @@ def plot_cell(
         radius="sm",
         size="lg",
         color=colors.DMC_GRAY,
-        rightSection=html.Button(
-            dmc.ActionIcon(
-                children=DashIconify(icon="lucide:download"),
-                color=colors.DMC_THEME,
-                variant="subtle",
-                size="lg",
-            ),
-            id={"type": "download-btn", "index": plot.id},
-            n_clicks=0,
-            style={"background": "none", "border": "none", "padding": 0, "cursor": "pointer"},
-        ),
+        rightSection=download_button,
     )
 
     plot_with_spinner = dcc.Loading(
@@ -70,7 +78,9 @@ def plot_cell(
 
     card_children = []
     if subtitle:
-        card_children.append(dmc.Text(subtitle, size="xs", c="dimmed", mb=6))
+        subtitle_lines = subtitle if isinstance(subtitle, list) else [subtitle]
+        for line in subtitle_lines:
+            card_children.append(dmc.Text(line, size="xs", c="dimmed", mb=6))
     card_children.append(plot_with_spinner)
 
     plot_container = dmc.Card(

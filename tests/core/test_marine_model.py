@@ -6,6 +6,7 @@ from core.utils.marine_model import (
     SYSTEM_PARAMS,
     MarineModel,
     MarineModelParameter,
+    run_model_cached,
 )
 
 
@@ -118,6 +119,20 @@ def test__marine_model_run__plausible_seawater_values():
 
     assert np.all(results["pH"] > 7.0)
     assert np.all(results["pH"] < 9.0)
+
+
+def test__run_model_cached__returns_cached_result_for_identical_inputs():
+    """GIVEN two identical model parameter sets
+    WHEN the cached model runner is called twice
+    THEN the second call returns the cached result object without recomputation
+    """
+    args = (ALKALINITY.default_value, 1, 2, 1800, 2400, 10, 35, 25, 5, 1.5)
+
+    first = run_model_cached(*args)
+    second = run_model_cached(*args)
+
+    assert first is second
+    assert np.array_equal(first["pH"], MarineModel(*args).run()["pH"])
 
 
 def test__marine_model_run__saturation_decreases_with_rising_dic():

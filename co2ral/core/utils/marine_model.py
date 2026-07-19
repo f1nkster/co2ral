@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from functools import lru_cache
 
 import numpy as np
 import PyCO2SYS
@@ -140,7 +141,12 @@ TOTAL_PHOSPHATE = MarineModelParameter(
 CO3 = MarineModelParameter(name="CO3", label={"en": "CO₃²⁻", "de": "CO₃²⁻"}, unit="μmol/kg")
 HCO3 = MarineModelParameter(name="HCO3", label={"en": "HCO₃⁻", "de": "HCO₃⁻"}, unit="μmol/kg")
 
-DIC_PARAMS = MarineModelParameterCollection("DIC Related Parameters", params=[CO3, HCO3])
+CO2_AQ = MarineModelParameter(name="CO2", label={"en": "CO₂(aq)", "de": "CO₂(aq)"}, unit="μmol/kg")
+
+DIC_PARAMS = MarineModelParameterCollection("DIC Related Parameters", params=[CO2_AQ, HCO3, CO3])
+
+# The three DIC species in the order of the equilibrium cascade CO₂(aq) -> HCO₃⁻ -> CO₃²⁻.
+SPECIATION_PARAMS = [CO2_AQ, HCO3, CO3]
 
 # Saturation states straight from the PyCO2SYS results; the names match the result dict keys.
 OMEGA_ARAGONITE = MarineModelParameter(
@@ -209,3 +215,47 @@ class MarineModel:
         results = PyCO2SYS.sys(**model_args)
 
         return results
+
+
+@lru_cache(maxsize=512)
+def run_model_cached(
+    value_par1: float,
+    type_par1: int,
+    type_par2: int,
+    min_value_par2: float,
+    max_value_par2: float,
+    number_of_steps: int,
+    value_salinity: float,
+    value_temperature: float,
+    value_total_silicate: float,
+    value_total_phosphate: float,
+) -> dict:
+    """Runs the marine model with caching. The inputs are discrete slider values, so identical
+       parameter combinations recur constantly (especially with live updates and presets) and
+       the cache avoids recomputation. Callers must not mutate the returned dict.
+
+    :param value_par1: Value of the first (fixed) parameter.
+    :param type_par1: PyCO2SYS type of the first parameter.
+    :param type_par2: PyCO2SYS type of the second parameter.
+    :param min_value_par2: Minimum value for the second parameter.
+    :param max_value_par2: Maximum value for the second parameter.
+    :param number_of_steps: Number of steps for the second parameter.
+    :param value_salinity: Value for salinity.
+    :param value_temperature: Value for temperature.
+    :param value_total_silicate: Value for total silicate.
+    :param value_total_phosphate: Value for total phosphate.
+    :return: Result dict of the model run.
+    """
+    model = MarineModel(
+        value_par1=value_par1,
+        type_par1=type_par1,
+        type_par2=type_par2,
+        min_value_par2=min_value_par2,
+        max_value_par2=max_value_par2,
+        number_of_steps=number_of_steps,
+        value_salinity=value_salinity,
+        value_temperature=value_temperature,
+        value_total_silicate=value_total_silicate,
+        value_total_phosphate=value_total_phosphate,
+    )
+    return model.run()
