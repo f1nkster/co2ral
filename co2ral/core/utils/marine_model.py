@@ -217,6 +217,40 @@ class MarineModel:
         return results
 
 
+def run_single_state(
+    value_pco2: float,
+    value_temperature: float,
+    value_alkalinity: float = 2300.0,
+    value_salinity: float = 35.0,
+    value_total_silicate: float = 5.0,
+    value_total_phosphate: float = 1.5,
+) -> dict[str, float]:
+    """Runs the model for a single seawater state instead of a range, for the pictorial ocean view.
+
+    :param value_pco2: CO2 partial pressure in the air above the water, in μatm.
+    :param value_temperature: Water temperature in °C.
+    :param value_alkalinity: Total alkalinity in μmol/kg.
+    :param value_salinity: Practical salinity.
+    :param value_total_silicate: Total silicate in μmol/kg.
+    :param value_total_phosphate: Total phosphate in μmol/kg.
+    :return: Dict of scalar results (pH, dic, CO2, HCO3, CO3, saturation states).
+    """
+    results = run_model_cached(
+        value_alkalinity,
+        ALKALINITY.type,
+        PCO2.type,
+        value_pco2,
+        value_pco2,
+        1,
+        value_salinity,
+        value_temperature,
+        value_total_silicate,
+        value_total_phosphate,
+    )
+    keys = ("pH", "dic", "CO2", "HCO3", "CO3", "saturation_aragonite", "saturation_calcite")
+    return {key: float(np.atleast_1d(results[key])[0]) for key in keys}
+
+
 @lru_cache(maxsize=512)
 def run_model_cached(
     value_par1: float,

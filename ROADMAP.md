@@ -60,6 +60,12 @@ Fundament: Das Gleichgewicht soll *unmittelbar* auf Eingriffe reagieren.
       Lehrplanbezugs-Tabelle (Konzept → wo in CO2RAL), fertigen Unterrichts-Links
       (Schulmodus, alle Szenarien und Experimente), fünf Aufgabenvorschlägen und
       Hinweisen zu Teilen/Export; später Arbeitsblätter als PDF.
+- [x] **Ozean-Ansicht (M)** — bildliche Darstellung statt Diagramm unter `/ozean`: Himmel mit
+      CO₂-Menge und Dunst, Temperaturanzeige, Wasserkörper mit den resultierenden Zahlenwerten
+      (pH, Ω Aragonit, CO₂(aq), CO₃²⁻, HCO₃⁻, DIC). Jeder Wert zeigt zusätzlich die Änderung
+      gegenüber 1850, sodass die Wirkung einer Reglerbewegung direkt ablesbar ist; darunter ein
+      Klartext-Urteil zur Kalkbildung. Zwei Regler (CO₂, Temperatur), Sprungmarken 1850/heute/2100,
+      Zustand über `?co2=&temp=` teilbar.
 - [ ] **Aufgaben-/Lernpfadmodus (L)** — geführte Erkundungen in der App
       („Stelle pCO₂ auf 280 μatm. Beobachte Ω. Was bedeutet das für Korallen?") mit
       Schritt-Karten. Größtes Einzel-Feature, lohnt erst nach Phase 1+2.

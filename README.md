@@ -16,6 +16,8 @@ for the [Chair of Chemistry Education at FAU](https://www.chemiedidaktik.phil.fa
 * Guided Le Chatelier experiments and an optional Bjerrum plot with pK₁/pK₂ markers
 * School mode (`?mode=schule`): reduced interface, everyday scenarios with guiding
   questions, plus a teacher page at `/lehrkraefte` with curriculum links and tasks
+* Pictorial ocean view at `/ozean`: sky with CO₂ and water body with the resulting
+  values, each shown as a change relative to 1850 — no chart reading required
 * Shareable urls: all settings are encoded as query parameters (copy via the share icon)
 * Localized in German and English (`?lang=de` / `?lang=en`)
 * Download plots as PNG including the fixed model conditions, or all results as CSV

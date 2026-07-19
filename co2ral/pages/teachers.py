@@ -69,10 +69,15 @@ def layout(**url_queries: dict) -> Component:
 
     lesson_links = [
         _link_card(
+            dictionary["ocean_title"],
+            f"/ozean?lang={lang}",
+            "mdi:image-filter-hdr",
+        ),
+        _link_card(
             dictionary["teachers_school_entry"],
             f"/?mode=schule&lang={lang}",
             "mdi:school-outline",
-        )
+        ),
     ]
     lesson_links += [
         _link_card(

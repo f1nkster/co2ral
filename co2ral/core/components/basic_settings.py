@@ -46,6 +46,21 @@ def create_school_scenarios(lang: str) -> list:
     """
     dictionary = TRANSLATION_DICT[lang]
     components = [
+        # The pictorial view is the most approachable entry point, so it comes first.
+        html.A(
+            dmc.Button(
+                dictionary["ocean_title"],
+                variant="filled",
+                size="md",
+                color=DMC_TEAL,
+                fullWidth=True,
+                styles={"label": {"whiteSpace": "normal", "textAlign": "left"}},
+                leftSection=DashIconify(icon="mdi:image-filter-hdr", width=20),
+                mb=6,
+            ),
+            href=f"/ozean?lang={lang}",
+            style={"textDecoration": "none"},
+        ),
         sel.badge(dictionary["school_scenarios"]),
         dmc.Text(dictionary["school_intro"], size="xs", c="dimmed", mb=4),
     ]

@@ -155,6 +155,7 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
     # Localized labels per page path; the registry name itself is language independent.
     page_labels = {
         "/": TRANSLATION_DICT[lang]["nav_home"],
+        "/ozean": TRANSLATION_DICT[lang]["nav_ocean"],
         "/lehrkraefte": TRANSLATION_DICT[lang]["nav_teachers"],
     }
 
