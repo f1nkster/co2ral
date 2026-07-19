@@ -1,3 +1,5 @@
+import urllib.parse
+
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from core.utils.marine_model import run_single_state
@@ -13,41 +15,92 @@ PREINDUSTRIAL_PCO2 = 280.0
 # CO2 levels students can jump to directly.
 PCO2_MILESTONES = {"ocean_1850": 280, "ocean_today": 420, "ocean_2100": 936}
 
-# Fixed, deterministic positions (left %, top %) for the CO2 markers in the sky, so the
-# picture does not jump around randomly whenever a value changes. They stay in the upper
-# band, because the pCO2 label sits in the bottom left and the temperature badge top right.
+# Fixed, deterministic positions (left %, top %, size px) of the CO2 markers, so the sky
+# does not rearrange itself whenever a value changes. They stay in the upper band, because
+# the pCO2 label sits bottom left and the temperature badge top right.
 _CO2_POSITIONS = [
-    (6, 30),
-    (16, 8),
-    (25, 40),
-    (34, 16),
-    (44, 6),
-    (52, 34),
-    (61, 12),
-    (70, 42),
-    (78, 8),
-    (86, 30),
-    (4, 8),
-    (12, 46),
-    (21, 22),
-    (30, 4),
-    (40, 44),
-    (49, 18),
-    (58, 46),
-    (66, 26),
-    (75, 22),
-    (83, 46),
-    (90, 12),
-    (36, 30),
-    (55, 6),
-    (72, 4),
+    (14, 30, 30),
+    (26, 12, 26),
+    (37, 34, 32),
+    (48, 14, 27),
+    (59, 32, 30),
+    (69, 10, 25),
+    (79, 30, 29),
+    (88, 14, 26),
+    (20, 48, 24),
+    (33, 52, 27),
+    (45, 46, 25),
+    (57, 52, 28),
+    (70, 46, 24),
+    (82, 50, 27),
+    (8, 12, 25),
+    (17, 66, 22),
+    (30, 70, 25),
+    (43, 64, 23),
+    (55, 70, 26),
+    (66, 64, 22),
+    (77, 68, 25),
+    (90, 62, 23),
+    (5, 44, 23),
+    (95, 36, 22),
 ]
+
+# Decorative clouds (left %, top %, width px, height px).
+_CLOUDS = [(12, 16, 90, 26), (58, 8, 120, 30), (80, 34, 70, 20)]
+
+# Decorative bubbles in the water (left %, bottom px, size px, delay s).
+_BUBBLES = [(9, 20, 9, 0), (27, 0, 6, 2.5), (52, 30, 11, 5), (71, 10, 7, 1.5), (88, 25, 8, 3.8)]
 
 # The picture keeps a light sky and a blue water body in both color schemes, so all text
 # inside it needs explicit colors instead of the theme colors.
 _TEXT_DARK = "#212529"
 _TEXT_MUTED = "#5c636a"
 _DELTA_COLORS = {"down": "#c92a2a", "up": "#0b7285", "none": "#868e96"}
+
+_WATER_SURFACE = "#2f9bd6"
+_WATER_GRADIENT = f"linear-gradient(180deg, {_WATER_SURFACE} 0%, #1a6fae 45%, #0b3f70 100%)"
+
+
+def _svg_data_uri(svg: str) -> str:
+    """Packs an inline svg into a css url() value, so no external file is requested.
+
+    :param svg: The svg markup.
+    :return: CSS url() value with the svg as data uri.
+    """
+    return f'url("data:image/svg+xml,{urllib.parse.quote(svg)}")'
+
+
+def _wave_background(color: str) -> str:
+    """Builds the repeating wave crest that forms the water surface.
+
+    :param color: Fill color, matching the water surface.
+    :return: CSS background-image value.
+    """
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 22" preserveAspectRatio="none">'
+        f'<path d="M0 11 Q 15 0 30 11 T 60 11 T 90 11 T 120 11 V22 H0 Z" fill="{color}"/>'
+        f'<path d="M0 11 Q 15 0 30 11 T 60 11 T 90 11 T 120 11" fill="none" '
+        'stroke="rgba(255,255,255,0.65)" stroke-width="1.5"/>'
+        "</svg>"
+    )
+    return _svg_data_uri(svg)
+
+
+def _coral_background(color: str) -> str:
+    """Builds the stylized coral whose color reflects the aragonite saturation.
+
+    :param color: Branch color of the coral.
+    :return: CSS background-image value.
+    """
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
+        f'<g stroke="{color}" stroke-width="6" stroke-linecap="round" fill="none">'
+        '<path d="M32 62 V40"/><path d="M32 46 L21 33"/><path d="M32 46 L43 33"/>'
+        '<path d="M21 33 L17 21"/><path d="M43 33 L47 21"/><path d="M32 40 L32 26"/>'
+        '<path d="M32 30 L26 22"/><path d="M32 30 L38 22"/>'
+        "</g></svg>"
+    )
+    return _svg_data_uri(svg)
 
 
 def _format_number(value: float, decimals: int, lang: str) -> str:
@@ -127,39 +180,53 @@ def _value_card(label: str, value: str, unit: str, delta: tuple[str, str], lang:
         p="xs",
         radius="md",
         withBorder=True,
-        style={"backgroundColor": "#ffffff", "height": "100%"},
+        className="ocean-card",
+        style={"height": "100%"},
     )
 
 
 def _coral_status(omega: float, lang: str) -> Component:
-    """Builds the plain language verdict for the aragonite saturation.
+    """Builds the sea floor with a coral whose color reflects the aragonite saturation,
+       together with the plain language verdict.
 
     :param omega: Aragonite saturation state.
     :param lang: Selected language.
-    :return: Alert-like band shown at the bottom of the water body.
+    :return: Sea floor band closing the scene at the bottom.
     """
     dictionary = TRANSLATION_DICT[lang]
+    # Vivid pink when calcification works, pale when it gets harder, gray skeleton when
+    # calcium carbonate dissolves. Gray rather than white, so it stays visible on the sand.
     if omega >= 3:
-        text, background, border, icon = dictionary["ocean_coral_good"], "#e6fcf5", "#0ca678", "🪸"
+        text, coral_color = dictionary["ocean_coral_good"], "#e64980"
     elif omega >= 1:
-        text, background, border, icon = dictionary["ocean_coral_hard"], "#fff4e6", "#e8590c", "🪸"
+        text, coral_color = dictionary["ocean_coral_hard"], "#ffa8a8"
     else:
-        text, background, border, icon = dictionary["ocean_coral_bad"], "#fff5f5", "#c92a2a", "🐚"
+        text, coral_color = dictionary["ocean_coral_bad"], "#adb5bd"
 
-    return dmc.Paper(
+    return html.Div(
         dmc.Group(
-            [dmc.Text(icon, style={"fontSize": "22px"}), dmc.Text(text, size="sm", fw=600, c=_TEXT_DARK)],
-            gap="xs",
+            [
+                html.Div(
+                    className="ocean-coral",
+                    style={
+                        "width": "74px",
+                        "height": "74px",
+                        "backgroundImage": _coral_background(coral_color),
+                    },
+                ),
+                dmc.Text(text, size="sm", fw=600, c="#4a3f2a", style={"flex": "1"}),
+            ],
+            gap="sm",
+            wrap="nowrap",
         ),
-        p="xs",
-        radius="md",
-        mt="sm",
-        style={"backgroundColor": background, "borderLeft": f"5px solid {border}"},
+        className="ocean-floor ocean-content",
+        style={"marginTop": "16px", "padding": "12px 18px 10px"},
     )
 
 
 def create_ocean_view(value_pco2: float, value_temperature: float, lang: str = "de") -> Component:
-    """Builds the pictorial ocean view: sky with CO2, water body with the resulting values.
+    """Builds the pictorial ocean view: a sky whose haze and CO2 markers grow with the CO2
+       level, above a water body showing the resulting values.
 
     Every value is shown together with its change relative to the pre-industrial reference
     at the same temperature, so the effect of moving one slider is directly readable.
@@ -173,35 +240,58 @@ def create_ocean_view(value_pco2: float, value_temperature: float, lang: str = "
     current = run_single_state(value_pco2=value_pco2, value_temperature=value_temperature)
     reference = run_single_state(value_pco2=PREINDUSTRIAL_PCO2, value_temperature=value_temperature)
 
-    # Sky: hazier the more CO2 is in the air. Water stays the same blue, so the numbers
-    # and the coral verdict carry the message instead of a coloured-water suggestion.
-    sky_fraction = (value_pco2 - PREINDUSTRIAL_PCO2) / (1200 - PREINDUSTRIAL_PCO2)
-    sky_top = _interpolate_color((186, 226, 247), (214, 199, 170), sky_fraction)
-    sky_bottom = _interpolate_color((222, 242, 252), (233, 223, 205), sky_fraction)
-    temperature_color = _interpolate_color((77, 145, 214), (224, 90, 62), (value_temperature + 2) / 32)
+    co2_fraction = min(max((value_pco2 - PREINDUSTRIAL_PCO2) / (1200 - PREINDUSTRIAL_PCO2), 0.0), 1.0)
+    temperature_fraction = min(max((value_temperature + 2) / 34, 0.0), 1.0)
 
-    co2_count = min(max(round(value_pco2 / 50), 3), len(_CO2_POSITIONS))
-    co2_markers = [
-        html.Div(
-            "CO₂",
-            style={
-                "position": "absolute",
-                "left": f"{left}%",
-                "top": f"{top}%",
-                "fontSize": "11px",
-                "fontWeight": 600,
-                "color": "rgba(60, 60, 60, 0.75)",
-                "backgroundColor": "rgba(255, 255, 255, 0.55)",
-                "borderRadius": "8px",
-                "padding": "1px 4px",
-            },
-        )
-        for left, top in _CO2_POSITIONS[:co2_count]
-    ]
+    # A warm sun for warm water, a pale one for cold water.
+    sun_color = _interpolate_color((255, 249, 219), (255, 214, 153), temperature_fraction)
+    sun_glow = _interpolate_color((255, 236, 179), (255, 167, 89), temperature_fraction)
+    temperature_dot = _interpolate_color((77, 145, 214), (224, 90, 62), temperature_fraction)
 
     sky = html.Div(
         [
-            *co2_markers,
+            html.Div(
+                className="ocean-sun",
+                style={
+                    "left": "7%",
+                    "top": "12%",
+                    "width": "76px",
+                    "height": "76px",
+                    "background": f"radial-gradient(circle, #ffffff 8%, {sun_color} 45%, rgba(255,255,255,0) 72%)",
+                    "boxShadow": f"0 0 46px 18px {sun_glow}",
+                    "opacity": 0.95 - 0.25 * co2_fraction,
+                },
+            ),
+            *[
+                html.Div(
+                    className="ocean-cloud",
+                    style={"left": f"{left}%", "top": f"{top}%", "width": f"{width}px", "height": f"{height}px"},
+                )
+                for left, top, width, height in _CLOUDS
+            ],
+            # Smog wash: the more CO2, the hazier and warmer the sky gets.
+            html.Div(
+                className="ocean-haze",
+                style={
+                    "background": "linear-gradient(180deg, rgba(198,166,116,0) 0%, rgba(198,166,116,0.85) 100%)",
+                    "opacity": co2_fraction,
+                },
+            ),
+            *[
+                html.Div(
+                    "CO₂",
+                    className="ocean-co2",
+                    style={
+                        "left": f"{left}%",
+                        "top": f"{top}%",
+                        "width": f"{size}px",
+                        "height": f"{size}px",
+                        "fontSize": f"{max(9, round(size * 0.34))}px",
+                        "animationDelay": f"{(index % 5) * 0.7}s",
+                    },
+                )
+                for index, (left, top, size) in enumerate(_CO2_POSITIONS[: _co2_marker_count(value_pco2)])
+            ],
             html.Div(
                 [
                     dmc.Text(dictionary["ocean_atmosphere"], size="xs", c=_TEXT_MUTED),
@@ -219,7 +309,7 @@ def create_ocean_view(value_pco2: float, value_temperature: float, lang: str = "
                         align="baseline",
                     ),
                 ],
-                style={"position": "absolute", "left": "16px", "bottom": "12px"},
+                style={"position": "absolute", "left": "18px", "bottom": "26px", "zIndex": 2},
             ),
             dmc.Paper(
                 dmc.Group(
@@ -229,7 +319,7 @@ def create_ocean_view(value_pco2: float, value_temperature: float, lang: str = "
                                 "width": "12px",
                                 "height": "12px",
                                 "borderRadius": "50%",
-                                "backgroundColor": temperature_color,
+                                "backgroundColor": temperature_dot,
                             }
                         ),
                         dmc.Text(f"{_format_number(value_temperature, 0, lang)} °C", size="sm", fw=700, c=_TEXT_DARK),
@@ -241,19 +331,15 @@ def create_ocean_view(value_pco2: float, value_temperature: float, lang: str = "
                 style={
                     "position": "absolute",
                     "right": "16px",
-                    "top": "12px",
-                    "backgroundColor": "#ffffff",
+                    "top": "14px",
+                    "backgroundColor": "rgba(255, 255, 255, 0.92)",
+                    "zIndex": 2,
                 },
             ),
+            html.Div(className="ocean-waves", style={"backgroundImage": _wave_background(_WATER_SURFACE)}),
         ],
-        style={
-            "position": "relative",
-            "height": "180px",
-            "background": f"linear-gradient(to bottom, {sky_top}, {sky_bottom})",
-            "borderTopLeftRadius": "12px",
-            "borderTopRightRadius": "12px",
-            "overflow": "hidden",
-        },
+        className="ocean-sky",
+        style={"background": "linear-gradient(180deg, #a5d6ef 0%, #cbe9f8 55%, #e4f3fb 100%)"},
     )
 
     cards = [
@@ -303,27 +389,52 @@ def create_ocean_view(value_pco2: float, value_temperature: float, lang: str = "
 
     water = html.Div(
         [
-            dmc.Text(dictionary["ocean_water"], size="xs", c="white", mb=6),
-            dbc.Row(
+            html.Div(className="ocean-rays"),
+            *[
+                html.Div(
+                    className="ocean-bubble",
+                    style={
+                        "left": f"{left}%",
+                        "bottom": f"{bottom}px",
+                        "width": f"{size}px",
+                        "height": f"{size}px",
+                        "animationDelay": f"{delay}s",
+                    },
+                )
+                for left, bottom, size, delay in _BUBBLES
+            ],
+            html.Div(
                 [
-                    dbc.Col(
-                        _value_card(label, value, unit, delta, lang, note),
-                        xs=6,
-                        md=4,
-                        className="mb-2",
-                    )
-                    for label, value, unit, delta, note in cards
+                    dmc.Text(dictionary["ocean_water"], size="xs", c="rgba(255,255,255,0.85)", mb=8),
+                    dbc.Row(
+                        [
+                            dbc.Col(
+                                _value_card(label, value, unit, delta, lang, note),
+                                xs=6,
+                                md=4,
+                                className="mb-2",
+                            )
+                            for label, value, unit, delta, note in cards
+                        ],
+                        className="g-2",
+                    ),
                 ],
-                className="g-2",
+                className="ocean-content",
+                style={"padding": "16px 16px 0"},
             ),
             _coral_status(current["saturation_aragonite"], lang),
         ],
-        style={
-            "background": "linear-gradient(to bottom, #1c7ed6, #0b4f8a)",
-            "padding": "14px 16px 18px",
-            "borderBottomLeftRadius": "12px",
-            "borderBottomRightRadius": "12px",
-        },
+        className="ocean-water",
+        style={"background": _WATER_GRADIENT},
     )
 
-    return html.Div([sky, water], style={"boxShadow": "0 2px 10px rgba(0, 0, 0, 0.15)", "borderRadius": "12px"})
+    return html.Div([sky, water], className="ocean-scene")
+
+
+def _co2_marker_count(value_pco2: float) -> int:
+    """Number of CO2 markers drawn in the sky for a given CO2 level.
+
+    :param value_pco2: CO2 partial pressure in μatm.
+    :return: Marker count within the available positions.
+    """
+    return min(max(round(value_pco2 / 50), 3), len(_CO2_POSITIONS))
