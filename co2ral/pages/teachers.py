@@ -127,7 +127,7 @@ def layout(**url_queries: dict) -> Component:
     )
 
     return dbc.Container(
-        dbc.Row(dbc.Col(content, xs=12, lg=9, xl=7)),
+        dbc.Row(dbc.Col(content, xs=12, lg=9, xl=7), justify="center"),
         fluid=True,
         style={"paddingTop": "20px", "paddingBottom": "40px"},
     )
