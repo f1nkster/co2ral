@@ -23,16 +23,16 @@ Effort-Angaben: **S** = klein (Stunden), **M** = mittel (1–2 Sessions), **L** 
 
 Fundament: Das Gleichgewicht soll *unmittelbar* auf Eingriffe reagieren.
 
-- [ ] **Live-Updates (S)** — Diagramme aktualisieren beim Loslassen der Slider, „Los geht's"
+- [x] **Live-Updates (S)** — Diagramme aktualisieren beim Loslassen der Slider, „Los geht's"
       bleibt als Fallback. Serverlast unkritisch (ms-Berechnungen, clientseitiges Rendering).
-- [ ] **Ergebnis-Cache (S)** — `lru_cache` um den Modellaufruf; die Eingaben sind diskret,
+- [x] **Ergebnis-Cache (S)** — `lru_cache` um den Modellaufruf; die Eingaben sind diskret,
       im Unterricht rechnen alle dieselben Presets.
-- [ ] **Speziesverteilungs-Panel (M)** — Balken/100-%-Diagramm: Wie teilt sich DIC in
+- [x] **Speziesverteilungs-Panel (M)** — 100-%-Flächendiagramm: Wie teilt sich DIC in
       CO₂(aq) / HCO₃⁻ / CO₃²⁻ auf? Reagiert live auf die Slider → *das Gleichgewicht
-      verschiebt sich sichtbar*. (Werte liefert PyCO2SYS bereits mit.)
-- [ ] **Vergleichsmodus vorher/nachher (M)** — Zustand „einfrieren", dann stören:
-      beide Kurven überlagert in einem Diagramm plus Delta-Anzeige. Kernwerkzeug für
-      „Störung → Antwort des Gleichgewichts".
+      verschiebt sich sichtbar*. CO₂(aq) ist zusätzlich als Y-Parameter wählbar.
+- [x] **Vergleichsmodus vorher/nachher (M)** — Zustand „einfrieren", dann stören:
+      beide Kurven überlagert in einem Diagramm, beide Parametersätze im Untertitel
+      dokumentiert. Kernwerkzeug für „Störung → Antwort des Gleichgewichts".
 
 ## Phase 2 — Gleichgewichte verstehen
 
