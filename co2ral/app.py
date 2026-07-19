@@ -32,6 +32,7 @@ app.layout = dmc.MantineProvider(
             id="main-container",
             children=[dash.page_container],  # page_container automatically contains the content based on the url.
         ),
+        html.Div(id="footer-container"),
     ],
 )
 

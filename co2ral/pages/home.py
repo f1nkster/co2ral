@@ -1,5 +1,3 @@
-import urllib.parse
-
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
@@ -695,14 +693,7 @@ def update_navbar(search: str) -> dbc.Navbar:
     :param search: Current url search, after the ?, e.g., ?lang=de.
     :return: The navigation bar component.
     """
-    # Remove leading '?' if present
-    query = search[1:] if search and search.startswith("?") else (search or "")
-    url_query = dict(urllib.parse.parse_qsl(query))
-    lang = url_query.get("lang", "de")
-    if lang not in TRANSLATION_DICT:
-        lang = "de"
-
-    return navigation.get_navbar(lang=lang)
+    return navigation.get_navbar(lang=navigation.get_lang_from_search(search))
 
 
 @callback(

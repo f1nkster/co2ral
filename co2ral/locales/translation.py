@@ -53,6 +53,13 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "exp_end": "End experiment",
         "nav_home": "Explorer",
         "nav_teachers": "For teachers",
+        "footer_credit": (
+            "All calculations on this site are performed by PyCO2SYS, an open-source Python "
+            "implementation of the marine carbonate system by Humphreys et al."
+        ),
+        "footer_repo": "PyCO2SYS on GitHub",
+        "footer_docs": "PyCO2SYS documentation",
+        "footer_source": "CO2RAL source code",
         "school_scenarios": "Choose a topic",
         "school_explore": "Try it out",
         "school_intro": "Pick a topic, then explore: drag the temperature slider and watch the charts respond.",
@@ -190,6 +197,13 @@ TRANSLATION_DICT: dict[str, dict[str, str]] = {
         "exp_end": "Experiment beenden",
         "nav_home": "Explorer",
         "nav_teachers": "Für Lehrkräfte",
+        "footer_credit": (
+            "Alle Berechnungen dieser Seite führt PyCO2SYS durch — eine freie Python-Umsetzung "
+            "des marinen Karbonatsystems von Humphreys et al."
+        ),
+        "footer_repo": "PyCO2SYS auf GitHub",
+        "footer_docs": "PyCO2SYS-Dokumentation",
+        "footer_source": "Quellcode von CO2RAL",
         "school_scenarios": "Wähle ein Thema",
         "school_explore": "Ausprobieren",
         "school_intro": "Wähle ein Thema und probiere aus: Zieh am Temperaturregler und beobachte die Diagramme.",

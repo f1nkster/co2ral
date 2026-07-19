@@ -1,9 +1,11 @@
+import urllib.parse
+
 import dash
 import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from core.components.styles import text_elements as tx
 from core.utils.images import get_base64_image
-from dash import Input, Output, html
+from dash import Input, Output, callback, html
 from dash_iconify import DashIconify
 from env import component_ids as comp_ids
 from env import javascript_mapping as js
@@ -15,6 +17,69 @@ dashboard_icon = get_base64_image("logo.png")
 
 home_link = "/"
 ui_link = "https://github.com/f1nkster/co2ral"
+
+# The carbonate chemistry itself is computed by PyCO2SYS; the footer credits it.
+PYCO2SYS_REPO = "https://github.com/mvdh7/PyCO2SYS"
+PYCO2SYS_DOCS = "https://pyco2sys.readthedocs.io/"
+
+
+def get_lang_from_search(search: str) -> str:
+    """Reads the language from a url search string, falling back to German.
+
+    :param search: Current url search, after the ?, e.g. "?lang=en".
+    :return: Language code that exists in the translation dictionary.
+    """
+    query = search[1:] if search and search.startswith("?") else (search or "")
+    lang = dict(urllib.parse.parse_qsl(query)).get("lang", "de")
+    return lang if lang in TRANSLATION_DICT else "de"
+
+
+def get_footer(lang: str = "de") -> html.Footer:
+    """Get the page footer crediting PyCO2SYS, which performs all model calculations.
+
+    :param lang: Language for the texts, either "de" or "en".
+    :return: Footer component shown below the page content.
+    """
+    dictionary = TRANSLATION_DICT[lang]
+    separator = dmc.Text("·", size="xs", c="dimmed")
+
+    return html.Footer(
+        dmc.Stack(
+            [
+                dmc.Text(dictionary["footer_credit"], size="xs", c="dimmed", ta="center"),
+                dmc.Group(
+                    [
+                        dmc.Anchor(dictionary["footer_repo"], href=PYCO2SYS_REPO, target="_blank", size="xs"),
+                        separator,
+                        dmc.Anchor(dictionary["footer_docs"], href=PYCO2SYS_DOCS, target="_blank", size="xs"),
+                        separator,
+                        dmc.Anchor(dictionary["footer_source"], href=ui_link, target="_blank", size="xs"),
+                    ],
+                    gap="xs",
+                    justify="center",
+                ),
+            ],
+            gap=4,
+        ),
+        style={
+            "borderTop": "1px solid var(--bs-border-color)",
+            "marginTop": "32px",
+            "padding": "16px 12px 24px",
+        },
+    )
+
+
+@callback(
+    Output("footer-container", "children"),
+    Input("url", "search"),
+)
+def update_footer(search: str) -> html.Footer:
+    """Update the footer when the language in the url changes.
+
+    :param search: Current url search, after the ?, e.g. "?lang=de".
+    :return: The footer component.
+    """
+    return get_footer(lang=get_lang_from_search(search))
 
 
 def get_navbar(lang: str = "de") -> dbc.Navbar:
