@@ -8,7 +8,7 @@ from core.utils.marine_model import (
     MarineModelParameter,
 )
 from core.utils.presets import SCHOOL_PRESETS, get_preset_options
-from core.utils.settings import MAX_PLOT_COLUMNS, Settings
+from core.utils.settings import Settings
 from dash import dcc, html
 from dash_iconify import DashIconify
 from env.colors import DMC_GRAY, DMC_LIME, DMC_RED, DMC_TEAL
@@ -181,22 +181,6 @@ def create_basic_settings(
         )
     )
     technical.append(
-        dmc.Box(
-            [
-                dmc.Text(dictionary["plot_columns"], size="sm", fw=500),
-                dmc.Text(dictionary["plot_columns_description"], size="xs", c="dimmed", mb=4),
-                dmc.SegmentedControl(
-                    id="plot-columns",
-                    data=[{"value": str(count), "label": str(count)} for count in range(1, MAX_PLOT_COLUMNS + 1)],
-                    value=str(settings.columns),
-                    size="xs",
-                    fullWidth=True,
-                ),
-            ],
-            mt=10,
-        )
-    )
-    technical.append(
         dmc.MultiSelect(
             label=dictionary["y_axis_parameter"],
             description=dictionary["y_axis_parameter_description"],
@@ -219,6 +203,18 @@ def create_basic_settings(
             checked=settings.show_bjerrum,
             size="sm",
             mt=8,
+        )
+    )
+    content.append(
+        dmc.Button(
+            dictionary["grid_reset"],
+            id="reset-grid-btn",
+            n_clicks=0,
+            variant="subtle",
+            size="compact-xs",
+            color=DMC_GRAY,
+            leftSection=DashIconify(icon="mdi:view-grid-outline", width=14),
+            mt=6,
         )
     )
     content.append(dbc.Row(style={"height": "30px"}))

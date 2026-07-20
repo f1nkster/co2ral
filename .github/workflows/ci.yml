@@ -18,6 +18,12 @@ jobs:
       - name: Install poetry
         run: pipx install "poetry<2"
 
+      # The lock is refreshed from pyproject here: it cannot be regenerated on the dev
+      # machine, which lacks the Python 3.12 the project requires. --no-update keeps the
+      # other pinned versions and only adds what changed.
+      - name: Sync lock file
+        run: poetry lock --no-update
+
       - name: Install dependencies
         run: poetry install
 

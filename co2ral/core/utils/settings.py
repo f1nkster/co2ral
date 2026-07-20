@@ -14,10 +14,6 @@ from core.utils.marine_model import (
 )
 
 
-# Bootstrap's twelve column grid divides evenly by these, so the plots stay equally wide.
-MAX_PLOT_COLUMNS = 3
-
-
 def _to_float(value: Any, fallback: float) -> float:
     """Parses a value to float, returning the fallback on invalid input.
 
@@ -70,8 +66,6 @@ class Settings:
     total_silicate: float = TOTAL_SILICATE.default_value
     total_phosphate: float = TOTAL_PHOSPHATE.default_value
     show_bjerrum: bool = False
-    # Number of plots placed next to each other on wide screens.
-    columns: int = 1
 
     @classmethod
     def from_query(cls, url_queries: dict) -> "Settings":
@@ -108,7 +102,6 @@ class Settings:
             total_silicate=_to_float(url_queries.get("sil"), defaults.total_silicate),
             total_phosphate=_to_float(url_queries.get("phos"), defaults.total_phosphate),
             show_bjerrum=str(url_queries.get("bjerrum", "")).lower() in ("1", "true"),
-            columns=min(max(_to_int(url_queries.get("cols"), defaults.columns), 1), MAX_PLOT_COLUMNS),
         )
 
     def to_query(self) -> str:
@@ -131,6 +124,4 @@ class Settings:
         )
         if self.show_bjerrum:
             query += "&bjerrum=1"
-        if self.columns != 1:
-            query += f"&cols={self.columns}"
         return query

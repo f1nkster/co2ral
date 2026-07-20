@@ -14,6 +14,8 @@ for the [Chair of Chemistry Education at FAU](https://www.chemiedidaktik.phil.fa
   aragonite/calcite saturation states Ω with a reference line at Ω = 1) against it
 * Didactic scenario presets (ocean acidification, coral reef, North Sea, Baltic Sea)
 * Guided Le Chatelier experiments and an optional Bjerrum plot with pK₁/pK₂ markers
+* Explorer plots arranged in a draggable, resizable grid; the arrangement is remembered
+  across live updates and page reloads (stacks to one column on phones)
 * School mode (`?mode=schule`): reduced interface, everyday scenarios with guiding
   questions, plus a teacher page at `/lehrkraefte` with curriculum links and tasks
 * Pictorial ocean view at `/ozean`: sky with CO₂ and water body with the resulting

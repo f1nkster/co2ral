@@ -26,8 +26,9 @@ from core.utils.marine_model import (
     MarineModelParameter,
     run_model_cached,
 )
+from core.utils.plot_grid import build_plot_grid
 from core.utils.presets import SCHOOL_PRESETS, get_school_preset_by_name
-from core.utils.settings import MAX_PLOT_COLUMNS, Settings
+from core.utils.settings import Settings
 from dash import ALL, Input, Output, State, callback, ctx, dcc, html
 from dash.development.base_component import Component
 from flask import request
@@ -68,6 +69,9 @@ def layout(**url_queries: dict) -> Component:
         dcc.Store(id="lang-store", data=lang),
         dcc.Store(id="mode-store", data="schule" if school_mode else ""),
         dcc.Store(id="frozen-store", data=frozen_data),
+        # Remembers the dragged/resized plot arrangement. Local storage, so it survives both
+        # live updates and a page reload; the reset button clears it.
+        dcc.Store(id="grid-layout-store", storage_type="local"),
         create_basic_settings(
             lang=lang, settings=settings, comparison_active=frozen_data is not None, school_mode=school_mode
         ),
@@ -117,30 +121,6 @@ def _format_value_with_unit(value: float, unit: str) -> str:
     :return: Formatted string.
     """
     return f"{value} {unit}" if unit and unit != "-" else f"{value}"
-
-
-def _arrange_in_grid(plots: list, columns: str | int) -> list:
-    """Arranges the plot cells in a responsive grid.
-
-    Each plot keeps its full width on phones and tablets; only from the lg breakpoint up do
-    the chosen number of columns take effect, so narrow screens are never cramped.
-
-    :param plots: The plot cells to arrange.
-    :param columns: Desired number of plots per row on wide screens.
-    :return: A single-element list with the grid row, matching the callback output shape.
-    """
-    try:
-        count = min(max(int(columns), 1), MAX_PLOT_COLUMNS)
-    except (TypeError, ValueError):
-        count = 1
-
-    # Bootstrap's twelve columns divide evenly by 1, 2 and 3.
-    width = 12 // count
-    grid = dbc.Row(
-        [dbc.Col(plot, xs=12, lg=width, className="d-flex") for plot in plots],
-        className="g-3",
-    )
-    return [grid]
 
 
 def _build_context_line(
@@ -194,11 +174,13 @@ def _build_context_line(
         Input("slider-total_phosphate", "value"),
         Input("frozen-store", "data"),
         Input("bjerrum-switch", "checked"),
-        Input("plot-columns", "value"),
+        Input("reset-grid-btn", "n_clicks"),
     ],
     [
         State("par1-dd", "value"),
         State("par2-dd", "value"),
+        # The saved arrangement is read, not observed: dragging must not rebuild the grid.
+        State("grid-layout-store", "data"),
         State("lang-store", "data"),
     ],
 )
@@ -215,9 +197,10 @@ def create_plots(
     value_total_phosphate: float,
     frozen_data: dict | None,
     show_bjerrum: bool,
-    plot_columns: str,
+    reset_grid_clicks: int,
     selected_par1_name: str,
     selected_par2_name: str,
+    stored_layout: list | None,
     lang: str,
 ) -> tuple[list]:
     """Creates the output plots. Runs on page load and live on every input change (sliders
@@ -236,14 +219,19 @@ def create_plots(
     :param value_total_phosphate: Value for total phosphate.
     :param frozen_data: Frozen conditions for the comparison mode, or None.
     :param show_bjerrum: Whether to render the Bjerrum plot panel.
-    :param plot_columns: How many plots share a row on wide screens.
     :param selected_par1_name: Name of the selected first parameter.
     :param selected_par2_name: Name of the selected second parameter.
+    :param stored_layout: The user's saved grid arrangement, or None for the default.
     :param lang: Selected language.
-    :return: List of plot cells or a hint if the selection is incomplete.
+    :return: The plot grid, or a hint if the selection is incomplete.
     """
     lang = lang if lang in TRANSLATION_DICT else "de"
     dictionary = TRANSLATION_DICT[lang]
+
+    # The reset button rebuilds with the default layout; ignore the stored one for this run.
+    # Handled here rather than only in the store callback to avoid a read-before-write race.
+    if ctx.triggered_id == "reset-grid-btn":
+        stored_layout = None
 
     if not yaxis_names:
         hint = dmc.Alert(
@@ -310,18 +298,22 @@ def create_plots(
             prefix=dictionary["comparison_prefix"],
         )
 
-    # The speciation panel is always shown first: it visualizes how the equilibrium
-    # between the DIC species shifts over the x-axis range.
-    plots = [
-        plot_cell(
-            dictionary["speciation_title"],
-            html.Div(
-                id="speciation-chart",
-                style=cell_style,
-                children=create_speciation_chart(model_results=results, par_xaxis=par2, lang=lang),
+    # Each cell carries a stable key so the draggable grid can remember its position across
+    # live updates. The speciation panel comes first: it shows how the equilibrium between
+    # the DIC species shifts over the x-axis range.
+    cells = [
+        (
+            "speciation",
+            plot_cell(
+                dictionary["speciation_title"],
+                html.Div(
+                    id="speciation-chart",
+                    style=cell_style,
+                    children=create_speciation_chart(model_results=results, par_xaxis=par2, lang=lang),
+                ),
+                subtitle=[dictionary["speciation_hint"], context_line],
+                with_download=False,
             ),
-            subtitle=[dictionary["speciation_hint"], context_line],
-            with_download=False,
         )
     ]
 
@@ -341,18 +333,21 @@ def create_plots(
             value_total_phosphate,
         )
         current_ph_values = np.atleast_1d(results["pH"]) if par1.name != "pH" else np.atleast_1d(value_par1)
-        plots.append(
-            plot_cell(
-                dictionary["bjerrum_title"],
-                html.Div(
-                    id="bjerrum-chart",
-                    style=cell_style,
-                    children=create_bjerrum_chart(
-                        bjerrum_results=bjerrum_results, current_ph_values=current_ph_values, lang=lang
+        cells.append(
+            (
+                "bjerrum",
+                plot_cell(
+                    dictionary["bjerrum_title"],
+                    html.Div(
+                        id="bjerrum-chart",
+                        style=cell_style,
+                        children=create_bjerrum_chart(
+                            bjerrum_results=bjerrum_results, current_ph_values=current_ph_values, lang=lang
+                        ),
                     ),
+                    subtitle=[dictionary["bjerrum_hint"], context_line],
+                    with_download=False,
                 ),
-                subtitle=[dictionary["bjerrum_hint"], context_line],
-                with_download=False,
             )
         )
 
@@ -372,15 +367,62 @@ def create_plots(
         if yaxis_param.name.startswith("saturation_"):
             subtitle = f"{context_line} · {dictionary['omega_hint']}"
         subtitle_lines = [subtitle] if comparison_line is None else [subtitle, comparison_line]
-        plots.append(
-            plot_cell(
-                dictionary["plot_title_prefix"] + yaxis_param.label[lang],
-                html.Div(id=f"line-chart-{yaxis_param.name}", style=cell_style, children=line_chart),
-                subtitle=subtitle_lines,
+        cells.append(
+            (
+                f"line-{yaxis_param.name}",
+                plot_cell(
+                    dictionary["plot_title_prefix"] + yaxis_param.label[lang],
+                    html.Div(id=f"line-chart-{yaxis_param.name}", style=cell_style, children=line_chart),
+                    subtitle=subtitle_lines,
+                ),
             )
         )
 
-    return (_arrange_in_grid(plots, plot_columns),)
+    # Remount only when the arrangement should change: the set of plots (their keys) or a
+    # reset click. Value-only updates keep the same token, so a drag is preserved.
+    remount_token = f"{reset_grid_clicks or 0}:{','.join(key for key, _ in cells)}"
+    grid = build_plot_grid(cells, stored_layout, handle_text=dictionary["drag_here"], remount_token=remount_token)
+    return ([dmc.Text(dictionary["grid_hint"], size="xs", c="dimmed", mb="xs"), grid],)
+
+
+@callback(
+    Output("grid-layout-store", "data"),
+    Input("plot-grid", "currentLayout"),
+    State("grid-layout-store", "data"),
+    prevent_initial_call=True,
+)
+def remember_grid_layout(current_layout: list | None, stored_layout: list | None) -> list:
+    """Saves the arrangement whenever the user drags or resizes a plot.
+
+    The positions are merged by key, so a plot that is temporarily hidden (e.g. a deselected
+    y-axis parameter) keeps its remembered place for when it returns.
+
+    :param current_layout: The grid's current layout, emitted on every change.
+    :param stored_layout: The previously stored arrangement.
+    :return: The merged arrangement.
+    """
+    if not current_layout:
+        return dash.no_update
+
+    merged = {entry["i"]: entry for entry in (stored_layout or []) if "i" in entry}
+    for entry in current_layout:
+        if "i" in entry:
+            merged[entry["i"]] = {key: entry[key] for key in ("i", "x", "y", "w", "h") if key in entry}
+    return list(merged.values())
+
+
+@callback(
+    Output("grid-layout-store", "data", allow_duplicate=True),
+    Input("reset-grid-btn", "n_clicks"),
+    prevent_initial_call=True,
+)
+def reset_grid_layout(n_clicks: int) -> None:
+    """Clears the saved arrangement, so the grid falls back to its default layout.
+
+    :param n_clicks: Number of clicks on the reset button.
+    :return: None, i.e. an empty stored arrangement.
+    """
+    return None
 
 
 @callback(
