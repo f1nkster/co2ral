@@ -94,7 +94,9 @@ def plot_cell(
         withBorder=True,
     )
 
-    cell_container = html.Div([title_container, plot_container], style=style)
+    # Full width and height, so cells sharing a grid row line up and stretch equally.
+    cell_style = {**style, "width": "100%", "display": "flex", "flexDirection": "column"}
+    cell_container = html.Div([title_container, plot_container], style=cell_style)
 
     return cell_container
 

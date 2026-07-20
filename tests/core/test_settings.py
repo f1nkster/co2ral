@@ -2,7 +2,7 @@ import urllib.parse
 
 from core.utils.experiments import EXPERIMENTS, get_experiment_by_name
 from core.utils.presets import PRESETS, SCHOOL_PRESETS, get_preset_options, get_school_preset_by_name
-from core.utils.settings import Settings
+from core.utils.settings import MAX_PLOT_COLUMNS, Settings
 
 
 def _parse(query: str) -> dict:
@@ -96,6 +96,29 @@ def test__settings__to_query_formats_integers_without_decimal():
     assert "par1val=2300" in query
     assert "par1val=2300.0" not in query
     assert "phos=1.5" in query
+
+
+def test__settings__columns_roundtrip_and_default_omitted():
+    """GIVEN settings with a custom and the default column count
+    WHEN they are serialized and parsed back
+    THEN the custom count survives while the default is left out of the query
+    """
+    two_columns = Settings(columns=2)
+
+    assert "cols=2" in two_columns.to_query()
+    assert Settings.from_query(_parse(two_columns.to_query())).columns == 2
+    assert "cols=" not in Settings().to_query()
+    assert Settings.from_query({}).columns == 1
+
+
+def test__settings__columns_clamped_to_valid_range():
+    """GIVEN queries with an out-of-range or invalid column count
+    WHEN settings are parsed from them
+    THEN the count is clamped to between one and the maximum, falling back to the default
+    """
+    assert Settings.from_query(_parse("cols=9")).columns == MAX_PLOT_COLUMNS
+    assert Settings.from_query(_parse("cols=0")).columns == 1
+    assert Settings.from_query(_parse("cols=abc")).columns == 1
 
 
 def test__settings__bjerrum_flag_roundtrip():

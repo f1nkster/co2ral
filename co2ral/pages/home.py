@@ -27,7 +27,7 @@ from core.utils.marine_model import (
     run_model_cached,
 )
 from core.utils.presets import SCHOOL_PRESETS, get_school_preset_by_name
-from core.utils.settings import Settings
+from core.utils.settings import MAX_PLOT_COLUMNS, Settings
 from dash import ALL, Input, Output, State, callback, ctx, dcc, html
 from dash.development.base_component import Component
 from flask import request
@@ -119,6 +119,30 @@ def _format_value_with_unit(value: float, unit: str) -> str:
     return f"{value} {unit}" if unit and unit != "-" else f"{value}"
 
 
+def _arrange_in_grid(plots: list, columns: str | int) -> list:
+    """Arranges the plot cells in a responsive grid.
+
+    Each plot keeps its full width on phones and tablets; only from the lg breakpoint up do
+    the chosen number of columns take effect, so narrow screens are never cramped.
+
+    :param plots: The plot cells to arrange.
+    :param columns: Desired number of plots per row on wide screens.
+    :return: A single-element list with the grid row, matching the callback output shape.
+    """
+    try:
+        count = min(max(int(columns), 1), MAX_PLOT_COLUMNS)
+    except (TypeError, ValueError):
+        count = 1
+
+    # Bootstrap's twelve columns divide evenly by 1, 2 and 3.
+    width = 12 // count
+    grid = dbc.Row(
+        [dbc.Col(plot, xs=12, lg=width, className="d-flex") for plot in plots],
+        className="g-3",
+    )
+    return [grid]
+
+
 def _build_context_line(
     par1: MarineModelParameter,
     value_par1: float,
@@ -170,6 +194,7 @@ def _build_context_line(
         Input("slider-total_phosphate", "value"),
         Input("frozen-store", "data"),
         Input("bjerrum-switch", "checked"),
+        Input("plot-columns", "value"),
     ],
     [
         State("par1-dd", "value"),
@@ -190,6 +215,7 @@ def create_plots(
     value_total_phosphate: float,
     frozen_data: dict | None,
     show_bjerrum: bool,
+    plot_columns: str,
     selected_par1_name: str,
     selected_par2_name: str,
     lang: str,
@@ -210,6 +236,7 @@ def create_plots(
     :param value_total_phosphate: Value for total phosphate.
     :param frozen_data: Frozen conditions for the comparison mode, or None.
     :param show_bjerrum: Whether to render the Bjerrum plot panel.
+    :param plot_columns: How many plots share a row on wide screens.
     :param selected_par1_name: Name of the selected first parameter.
     :param selected_par2_name: Name of the selected second parameter.
     :param lang: Selected language.
@@ -353,7 +380,7 @@ def create_plots(
             )
         )
 
-    return (plots,)
+    return (_arrange_in_grid(plots, plot_columns),)
 
 
 @callback(
@@ -540,6 +567,7 @@ def update_par1_slider(selected_par1_name: str, lang: str) -> dmc.Slider:
         State("slider-total-silicate", "value"),
         State("slider-total_phosphate", "value"),
         State("bjerrum-switch", "checked"),
+        State("plot-columns", "value"),
         State("lang-store", "data"),
         State("mode-store", "data"),
     ],
@@ -559,6 +587,7 @@ def build_share_link(
     value_total_silicate: float,
     value_total_phosphate: float,
     show_bjerrum: bool,
+    plot_columns: str,
     lang: str,
     mode: str,
 ) -> str:
@@ -577,10 +606,15 @@ def build_share_link(
     :param value_total_silicate: Value of total silicate.
     :param value_total_phosphate: Value of total phosphate.
     :param show_bjerrum: Whether the Bjerrum plot is shown.
+    :param plot_columns: How many plots share a row on wide screens.
     :param lang: Selected language.
     :param mode: Interface mode, "schule" for the reduced school interface.
     :return: Absolute url with all settings as query parameters.
     """
+    try:
+        columns = int(plot_columns)
+    except (TypeError, ValueError):
+        columns = 1
     settings = Settings(
         par1_name=selected_par1_name,
         par1_value=value_par1,
@@ -594,6 +628,7 @@ def build_share_link(
         total_silicate=value_total_silicate,
         total_phosphate=value_total_phosphate,
         show_bjerrum=bool(show_bjerrum),
+        columns=columns,
     )
     host = request.host_url.rstrip("/")
     mode_query = f"&mode={mode}" if mode else ""

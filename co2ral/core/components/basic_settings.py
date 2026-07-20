@@ -8,7 +8,7 @@ from core.utils.marine_model import (
     MarineModelParameter,
 )
 from core.utils.presets import SCHOOL_PRESETS, get_preset_options
-from core.utils.settings import Settings
+from core.utils.settings import MAX_PLOT_COLUMNS, Settings
 from dash import dcc, html
 from dash_iconify import DashIconify
 from env.colors import DMC_GRAY, DMC_LIME, DMC_RED, DMC_TEAL
@@ -178,6 +178,22 @@ def create_basic_settings(
             description=dictionary["x_axis_parameter_description"],
             data=SYSTEM_PARAMS.get_option_list_without_param(settings.par1_name, lang=lang),
             value=settings.par2_name,
+        )
+    )
+    technical.append(
+        dmc.Box(
+            [
+                dmc.Text(dictionary["plot_columns"], size="sm", fw=500),
+                dmc.Text(dictionary["plot_columns_description"], size="xs", c="dimmed", mb=4),
+                dmc.SegmentedControl(
+                    id="plot-columns",
+                    data=[{"value": str(count), "label": str(count)} for count in range(1, MAX_PLOT_COLUMNS + 1)],
+                    value=str(settings.columns),
+                    size="xs",
+                    fullWidth=True,
+                ),
+            ],
+            mt=10,
         )
     )
     technical.append(
