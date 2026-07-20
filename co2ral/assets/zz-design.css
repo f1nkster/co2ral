@@ -93,6 +93,9 @@ body {
 #main-container {
     background: var(--ds-bg);
     border-top: none;
+    /* Absorb the small horizontal overshoot of bootstrap's negative row margins, so phones
+       get no stray horizontal scrollbar. clip (not hidden) keeps sticky positioning intact. */
+    overflow-x: clip;
 }
 
 a {
@@ -370,27 +373,49 @@ a:hover {
     text-align: left;
 }
 
-/* ---------- draggable plot grid ---------- */
+/* ---------- reorderable plot flow ---------- */
 
-/* Below the lg breakpoint the react-grid-layout tiles are forced into a plain stacked
-   column, so the dashboard is always readable on phones and tablets regardless of the
-   library's width measurement — dragging and resizing tiles is a desktop feature. */
+/* Tiles flow left to right and wrap into rows; each takes the fraction of the row width
+   set on it (half, third, full), so two halves share a row and a full one takes the next. */
+.plot-flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.plot-tile {
+    min-width: 0;
+}
+
+/* The title bar is the drag handle. */
+.plot-title-badge {
+    cursor: grab;
+}
+
+.plot-tile.sortable-chosen .plot-title-badge {
+    cursor: grabbing;
+}
+
+.plot-tile.sortable-ghost {
+    opacity: 0.4;
+}
+
+/* Compact width switch in the header, on the dark title bar. */
+.tile-width-control {
+    --sc-color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.tile-width-control .mantine-SegmentedControl-label {
+    color: #e2e8f0;
+    padding: 2px 8px;
+}
+
+/* On phones and tablets every plot spans the full width, stacked. */
 @media (max-width: 991.98px) {
-    #plot-grid {
-        height: auto !important;
-    }
-
-    #plot-grid .react-grid-item {
-        position: relative !important;
-        left: 0 !important;
-        top: 0 !important;
-        transform: none !important;
-        width: 100% !important;
-        height: auto !important;
-        margin-bottom: 16px;
-    }
-
-    #plot-grid .react-resizable-handle {
-        display: none;
+    .plot-tile {
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
     }
 }

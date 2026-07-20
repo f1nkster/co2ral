@@ -15,6 +15,7 @@ def plot_cell(
     style: dict = {"width": "100%", "margin-bottom": "20px"},
     subtitle: Union[None, str, list] = None,
     with_download: bool = True,
+    header_controls: Union[None, Component] = None,
 ) -> html.Div:
     """Creates a plot cell for given title and plot.
 
@@ -23,6 +24,7 @@ def plot_cell(
     :param style: style for the overall cell container
     :param subtitle: context line(s) with the fixed model conditions, shown above the plot
     :param with_download: whether to render the PNG download button in the title bar
+    :param header_controls: extra control shown in the title bar, left of the download button
     :return: html.Div containing cell title and plot
     """
     download_button = (
@@ -41,6 +43,13 @@ def plot_cell(
         else None
     )
 
+    # The width control and download button sit together at the right of the title bar.
+    right_section = dmc.Group(
+        [control for control in (header_controls, download_button) if control is not None],
+        gap="xs",
+        wrap="nowrap",
+    )
+
     title_container = dmc.Badge(
         title,
         className="plot-title-badge",
@@ -50,15 +59,17 @@ def plot_cell(
             "display": "flex",
             "justify-content": "space-between",
             "align-items": "center",
-            "padding-right": "0px",
+            "padding-right": "6px",
             "textTransform": "none",
+            # The header is the drag handle; make that discoverable.
+            "cursor": "grab",
         },
         fullWidth=True,
         variant="dot",
         radius="sm",
         size="lg",
         color=colors.DMC_GRAY,
-        rightSection=download_button,
+        rightSection=right_section,
     )
 
     plot_with_spinner = dcc.Loading(
