@@ -26,7 +26,7 @@ from core.utils.marine_model import (
     MarineModelParameter,
     run_model_cached,
 )
-from core.utils.plot_layout import build_plot_flow, default_width, order_keys, width_control
+from core.utils.plot_layout import build_plot_flow, layout_rows
 from core.utils.presets import SCHOOL_PRESETS, get_school_preset_by_name
 from core.utils.settings import Settings
 from dash import ALL, Input, Output, State, callback, ctx, dcc, html
@@ -69,10 +69,11 @@ def layout(**url_queries: dict) -> Component:
         dcc.Store(id="lang-store", data=lang),
         dcc.Store(id="mode-store", data="schule" if school_mode else ""),
         dcc.Store(id="frozen-store", data=frozen_data),
-        # Remember the plot order (from dragging) and per-tile width. Local storage, so the
-        # arrangement survives live updates and a page reload; the reset button clears it.
-        dcc.Store(id="plot-order-store", storage_type="local"),
-        dcc.Store(id="plot-widths-store", storage_type="local", data={}),
+        # Remember the plot arrangement (rows of plot keys, from dragging). Local storage,
+        # so it survives live updates and a page reload; the reset button clears it. The
+        # reset store only exists to trigger a rebuild after the arrangement was cleared.
+        dcc.Store(id="plot-layout-store", storage_type="local"),
+        dcc.Store(id="layout-reset-store"),
         # Target for the clientside callback that (re)attaches the drag-to-reorder behaviour.
         dcc.Store(id="sortable-dummy"),
         create_basic_settings(
@@ -177,14 +178,14 @@ def _build_context_line(
         Input("slider-total_phosphate", "value"),
         Input("frozen-store", "data"),
         Input("bjerrum-switch", "checked"),
-        Input("plot-widths-store", "data"),
+        Input("layout-reset-store", "data"),
     ],
     [
         State("par1-dd", "value"),
         State("par2-dd", "value"),
-        # The saved order is read, not observed: dragging reorders the DOM directly and only
-        # persists to the store, so it must not trigger a rebuild.
-        State("plot-order-store", "data"),
+        # The saved arrangement is read, not observed: dragging rearranges the DOM directly
+        # and only persists to the store, so it must not trigger a rebuild.
+        State("plot-layout-store", "data"),
         State("lang-store", "data"),
     ],
 )
@@ -201,10 +202,10 @@ def create_plots(
     value_total_phosphate: float,
     frozen_data: dict | None,
     show_bjerrum: bool,
-    widths: dict | None,
+    layout_reset_stamp: int | None,
     selected_par1_name: str,
     selected_par2_name: str,
-    stored_order: list | None,
+    stored_layout: list | None,
     lang: str,
 ) -> tuple[list]:
     """Creates the output plots. Runs on page load and live on every input change (sliders
@@ -223,16 +224,15 @@ def create_plots(
     :param value_total_phosphate: Value for total phosphate.
     :param frozen_data: Frozen conditions for the comparison mode, or None.
     :param show_bjerrum: Whether to render the Bjerrum plot panel.
-    :param widths: Chosen width value per plot key.
+    :param layout_reset_stamp: Bumped by the reset button, so clearing the arrangement re-renders.
     :param selected_par1_name: Name of the selected first parameter.
     :param selected_par2_name: Name of the selected second parameter.
-    :param stored_order: The user's saved plot order, or None for the default.
+    :param stored_layout: The user's saved plot arrangement (rows of keys), or None.
     :param lang: Selected language.
     :return: The plot flow, or a hint if the selection is incomplete.
     """
     lang = lang if lang in TRANSLATION_DICT else "de"
     dictionary = TRANSLATION_DICT[lang]
-    widths = widths or {}
 
     if not yaxis_names:
         hint = dmc.Alert(
@@ -299,12 +299,9 @@ def create_plots(
             prefix=dictionary["comparison_prefix"],
         )
 
-    # Each cell carries a stable key so the flow can remember its order and per-tile width
-    # across live updates. The speciation panel comes first: it shows how the equilibrium
-    # between the DIC species shifts over the x-axis range.
-    def _width_control(key: str) -> Component:
-        return width_control(key, widths.get(key, default_width(key)))
-
+    # Each cell carries a stable key so the flow can remember its arrangement across live
+    # updates. The speciation panel comes first: it shows how the equilibrium between the
+    # DIC species shifts over the x-axis range.
     cells = [
         (
             "speciation",
@@ -317,7 +314,6 @@ def create_plots(
                 ),
                 subtitle=[dictionary["speciation_hint"], context_line],
                 with_download=False,
-                header_controls=_width_control("speciation"),
             ),
         )
     ]
@@ -352,7 +348,6 @@ def create_plots(
                     ),
                     subtitle=[dictionary["bjerrum_hint"], context_line],
                     with_download=False,
-                    header_controls=_width_control("bjerrum"),
                 ),
             )
         )
@@ -381,72 +376,44 @@ def create_plots(
                     dictionary["plot_title_prefix"] + yaxis_param.label[lang],
                     html.Div(id=f"line-chart-{yaxis_param.name}", style=cell_style, children=line_chart),
                     subtitle=subtitle_lines,
-                    header_controls=_width_control(key),
                 ),
             )
         )
 
-    ordered_cells = dict(cells)
-    ordered = [(key, ordered_cells[key]) for key in order_keys(list(ordered_cells), stored_order)]
-    flow = build_plot_flow(ordered, widths)
+    cell_by_key = dict(cells)
+    rows = layout_rows(list(cell_by_key), stored_layout)
+    flow = build_plot_flow([[(key, cell_by_key[key]) for key in row] for row in rows])
     return ([dmc.Text(dictionary["grid_hint"], size="xs", c="dimmed", mb="xs"), flow],)
 
 
 @callback(
-    Output("plot-widths-store", "data"),
-    Input({"type": "tile-width", "key": ALL}, "value"),
-    prevent_initial_call=True,
-)
-def remember_widths(width_values: list[str]) -> dict:
-    """Saves the chosen width of every tile when one of the width controls changes.
-
-    :param width_values: The current value of each width control, in id order.
-    :return: The width value per plot key.
-    """
-    widths = {}
-    for control in ctx.inputs_list[0]:
-        value = control.get("value")
-        if value:
-            widths[control["id"]["key"]] = value
-    return widths
-
-
-@callback(
     [
-        Output("plot-order-store", "data", allow_duplicate=True),
-        Output("plot-widths-store", "data", allow_duplicate=True),
+        Output("plot-layout-store", "data"),
+        Output("layout-reset-store", "data"),
     ],
     Input("reset-grid-btn", "n_clicks"),
     prevent_initial_call=True,
 )
 def reset_arrangement(n_clicks: int) -> tuple:
-    """Clears the saved order and widths, so the plots fall back to their default layout.
+    """Clears the saved arrangement, so the plots fall back to their default layout.
+
+    The bumped reset store triggers the plot rebuild; the cleared layout store alone would
+    not, because the arrangement is read as State there.
 
     :param n_clicks: Number of clicks on the reset button.
-    :return: Empty order and widths.
+    :return: An empty arrangement and the bumped reset marker.
     """
-    return (None, {})
+    return (None, n_clicks)
 
 
-# When the plots are (re)rendered, (re)attach the drag-to-reorder behaviour: SortableJS lets
-# the user drag a tile by its header, and on drop it writes the new order back into the store.
+# When the plots are (re)rendered, (re)attach the drag behaviour: SortableJS lets the user
+# drag a tile by its header into another row (both tiles snap to half width) or into a drop
+# zone between rows (the tile gets a row of its own, at full width). The row logic lives in
+# assets/11-plot-rows.js; on drop it writes the arrangement back into the layout store.
 dash.clientside_callback(
     """
     function(children) {
-        const flow = document.getElementById('plot-flow');
-        if (!flow || !window.Sortable) { return window.dash_clientside.no_update; }
-        if (flow._sortable) { flow._sortable.destroy(); }
-        flow._sortable = window.Sortable.create(flow, {
-            handle: '.plot-title-badge',
-            draggable: '.plot-tile',
-            animation: 150,
-            onEnd: function() {
-                const order = Array.from(flow.children)
-                    .map(child => child.getAttribute('data-key'))
-                    .filter(Boolean);
-                window.dash_clientside.set_props('plot-order-store', { data: order });
-            }
-        });
+        if (window.co2ralPlotRows) { window.co2ralPlotRows.init(); }
         return window.dash_clientside.no_update;
     }
     """,

@@ -373,19 +373,38 @@ a:hover {
     text-align: left;
 }
 
-/* ---------- reorderable plot flow ---------- */
+/* ---------- reorderable plot rows ---------- */
 
-/* Tiles flow left to right and wrap into rows; each takes the fraction of the row width
-   set on it (half, third, full), so two halves share a row and a full one takes the next. */
+/* Rows stack vertically; the tiles in a row share its width equally, so a lone tile snaps
+   to the full width and two tiles to half each. The drop zones between the rows (inserted
+   by 11-plot-rows.js) double as the vertical spacing. */
 .plot-flow {
     display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
+    flex-direction: column;
+}
+
+.plot-row {
+    display: flex;
+    align-items: stretch;
     gap: 16px;
 }
 
-.plot-tile {
+.plot-row > .plot-tile {
+    flex: 1 1 0;
     min-width: 0;
+}
+
+/* Tiles sharing a row stretch to the same height: the cell fills the tile and its card
+   grows to swallow the height difference (e.g. from an extra subtitle line next door). */
+.plot-tile > div {
+    height: 100%;
+}
+
+/* One shared height across all rows: the card reserves room for the 300 px chart plus
+   two subtitle lines, so a plot with a single line does not fall short of the panels. */
+.plot-tile .mantine-Card-root {
+    flex: 1 1 auto;
+    min-height: 400px;
 }
 
 /* The title bar is the drag handle. */
@@ -401,21 +420,38 @@ a:hover {
     opacity: 0.4;
 }
 
-/* Compact width switch in the header, on the dark title bar. */
-.tile-width-control {
-    --sc-color: #cbd5e1;
-    background: rgba(255, 255, 255, 0.14);
+/* Idle, a drop zone is just the gap between two rows; while a tile is dragged it shows
+   itself as a target for "own row, full width". A hovered tile grows it naturally. */
+.plot-drop-zone {
+    min-height: 16px;
+    border-radius: 10px;
+    border: 2px dashed transparent;
 }
 
-.tile-width-control .mantine-SegmentedControl-label {
-    color: #e2e8f0;
-    padding: 2px 8px;
+.plot-flow.plot-dragging .plot-drop-zone {
+    min-height: 30px;
+    border-color: var(--ds-accent);
+    background: color-mix(in srgb, var(--ds-accent) 8%, transparent);
 }
 
-/* On phones and tablets every plot spans the full width, stacked. */
+/* On phones and tablets every plot spans the full width, stacked; without the drop zones
+   the rows need their own spacing. */
 @media (max-width: 991.98px) {
-    .plot-tile {
-        flex: 1 1 100% !important;
-        max-width: 100% !important;
+    .plot-flow {
+        gap: 16px;
+    }
+
+    .plot-row {
+        flex-wrap: wrap;
+        row-gap: 16px;
+    }
+
+    .plot-row > .plot-tile {
+        flex: 1 1 100%;
+        max-width: 100%;
+    }
+
+    .plot-drop-zone {
+        display: none;
     }
 }
