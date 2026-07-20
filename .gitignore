@@ -204,5 +204,5 @@ __marimo__/
 
 # University logos are not distributed with the source; place them on the server manually.
 # Not anchored to a path, so a copy in the wrong folder cannot be committed either.
-fau-logo.*
-LogoChemiedidaktik.*
+fau-logo*
+LogoChemiedidaktik*

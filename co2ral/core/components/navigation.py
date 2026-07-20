@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 import dash_mantine_components as dmc
 from core.components.styles import text_elements as tx
 from core.utils.images import get_base64_image
-from dash import Input, Output, callback, html
+from dash import Input, Output, State, callback, html
 from dash_iconify import DashIconify
 from env import component_ids as comp_ids
 from env import javascript_mapping as js
@@ -25,22 +25,45 @@ PYCO2SYS_DOCS = "https://pyco2sys.readthedocs.io/"
 
 # University logos are not part of the repository (see .gitignore) and have to be placed
 # in the assets folder on each machine. Any file extension works.
+#
+# Two variants, named after the theme they are shown in: the header is white in light mode
+# and dark in dark mode, so each needs a logo with the opposite ink.
 ASSETS_DIR = pathlib.Path(__file__).resolve().parents[2] / "assets"
-PARTNER_LOGO_STEMS = ("fau-logo", "LogoChemiedidaktik")
+PARTNER_LOGO_STEMS = {
+    "light": ("fau-logo-light",),
+    "dark": ("fau-logo", "LogoChemiedidaktik"),
+}
 
 
-def get_partner_logo_src() -> str | None:
-    """Finds the university logo in the assets folder.
+def get_partner_logo_src(theme: str = "dark") -> str | None:
+    """Finds the university logo for one theme in the assets folder.
 
-    Resolved per call, so the logo appears as soon as the file is dropped in, without
+    Resolved per call, so a logo appears as soon as the file is dropped in, without
     restarting the app.
 
-    :return: Asset url of the logo, or None if no logo file is present.
+    :param theme: "light" for the dark-ink logo, "dark" for the light-ink one.
+    :return: Asset url of the logo, or None if no matching file is present.
     """
-    for stem in PARTNER_LOGO_STEMS:
+    for stem in PARTNER_LOGO_STEMS.get(theme, ()):
         for candidate in sorted(ASSETS_DIR.glob(f"{stem}.*")):
             return f"/assets/{candidate.name}"
     return None
+
+
+def _logo_image(source: str, class_name: str = "") -> html.Img:
+    """Builds the logo image shown in the header.
+
+    :param source: Asset url of the logo file.
+    :param class_name: Extra class used to switch variants per theme.
+    :return: Image component.
+    """
+    return html.Img(
+        src=source,
+        alt="FAU Erlangen-Nürnberg",
+        height="34px",
+        className=class_name,
+        style={"marginRight": "12px"},
+    )
 
 
 def get_lang_from_search(search: str) -> str:
@@ -102,6 +125,50 @@ def update_footer(search: str) -> html.Footer:
     return get_footer(lang=get_lang_from_search(search))
 
 
+def _nav_links(lang: str, page_labels: dict[str, str]) -> list:
+    """Builds the page links of the header, including the imprint.
+
+    One list serves both layouts: bootstrap lays them out in a row from the lg breakpoint
+    up and stacks them behind the toggler below it.
+
+    :param lang: Selected language.
+    :param page_labels: Localized label per page path.
+    :return: List of nav links.
+    """
+    links = [
+        dbc.NavLink(
+            page_labels.get(page["relative_path"], page["name"]),
+            # Keep the language when navigating between pages.
+            href=f"{page['relative_path']}?lang={lang}",
+        )
+        for page in dash.page_registry.values()
+    ]
+    links.append(
+        dbc.NavLink(
+            TRANSLATION_DICT[lang]["imprint"],
+            href="https://www.chemiedidaktik.phil.fau.de/impressum/",
+            external_link=True,
+        )
+    )
+    return links
+
+
+@callback(
+    Output("navbar-collapse", "is_open"),
+    Input("navbar-toggler", "n_clicks"),
+    State("navbar-collapse", "is_open"),
+    prevent_initial_call=True,
+)
+def toggle_mobile_navigation(n_clicks: int, is_open: bool) -> bool:
+    """Opens and closes the stacked navigation on small screens.
+
+    :param n_clicks: Number of clicks on the toggler.
+    :param is_open: Whether the navigation is currently open.
+    :return: The new open state.
+    """
+    return not is_open
+
+
 def get_navbar(lang: str = "de") -> dbc.Navbar:
     """Get the component to display the main navigation.
 
@@ -131,24 +198,30 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
         gap=4,
     )
 
-    # University logo, resolved from the assets folder. Omitted entirely when no logo file
-    # is present, so a missing file never shows up as a broken image.
-    logo_source = get_partner_logo_src()
+    # University logo, resolved from the assets folder. Both variants are rendered and the
+    # stylesheet shows the one matching the theme; when only one file exists it is used for
+    # both, and with none at all the logo is omitted rather than shown broken.
+    light_logo = get_partner_logo_src("light") or get_partner_logo_src("dark")
+    dark_logo = get_partner_logo_src("dark") or get_partner_logo_src("light")
+
+    if not light_logo:
+        logo_images = []
+    elif light_logo == dark_logo:
+        logo_images = [_logo_image(light_logo)]
+    else:
+        logo_images = [
+            _logo_image(light_logo, "fau-logo-for-light"),
+            _logo_image(dark_logo, "fau-logo-for-dark"),
+        ]
+
     logo_cd = (
         html.A(
-            [
-                html.Img(
-                    src=logo_source,
-                    alt="FAU Erlangen-Nürnberg",
-                    height="34px",
-                    style={"marginRight": "12px"},
-                )
-            ],
+            logo_images,
             href="https://www.chemiedidaktik.phil.fau.de/",
             style={"width": "auto"},
             className="d-none d-md-block",
         )
-        if logo_source
+        if logo_images
         else None
     )
 
@@ -186,40 +259,15 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
         "/lehrkraefte": TRANSLATION_DICT[lang]["nav_teachers"],
     }
 
-    style = {"height": "30px", "color": "white"}
-    nav_items = []
-    for page in dash.page_registry.values():
-        path = page["relative_path"]
-        nav_items.append(
-            dbc.NavItem(
-                dmc.NavLink(
-                    label=page_labels.get(path, page["name"]),
-                    # Keep the language when navigating between pages.
-                    href=f"{path}?lang={lang}",
-                    style=style,
-                ),
-            )
-        )
-
-    # add legal notice
-    nav_items.append(
-        dbc.NavItem(
-            dmc.NavLink(
-                label=TRANSLATION_DICT[lang]["imprint"],
-                href="https://www.chemiedidaktik.phil.fau.de/impressum/",
-                style=style,
-            ),
-        )
-    )
-    dropdowns = dbc.Stack(nav_items, direction="horizontal", gap=3)
-
-    # Pushed right by ms-auto and laid out in the normal flow: absolute positioning made
-    # the links overlap the university logo.
-    panels = html.Div(
-        id="navbar-dropdowns",
-        className="g-0 ms-auto flex-nowrap mt-3 mt-md-0 d-none d-lg-block",
-        children=dropdowns,
-        style={"width": "auto", "marginRight": "16px"},
+    # A single set of links inside the collapse: bootstrap's navbar-expand-lg shows them in
+    # a row from lg up and hides them behind the toggler below it. The links used to be a
+    # separate row hidden with d-none, which left the other pages unreachable on a phone.
+    toggler = dbc.NavbarToggler(id="navbar-toggler", n_clicks=0, className="d-lg-none")
+    navigation_links = dbc.Collapse(
+        dbc.Nav(_nav_links(lang, page_labels), id="navbar-dropdowns", navbar=True, className="ms-auto"),
+        id="navbar-collapse",
+        is_open=False,
+        navbar=True,
     )
 
     lang_switch = dmc.SegmentedControl(
@@ -243,7 +291,15 @@ def get_navbar(lang: str = "de") -> dbc.Navbar:
         id="main-nav",
         children=[
             child
-            for child in [title_elements, panels, logo_cd, color_mode_switch, lang_switch, git_logo]
+            for child in [
+                title_elements,
+                toggler,
+                navigation_links,
+                logo_cd,
+                color_mode_switch,
+                lang_switch,
+                git_logo,
+            ]
             if child is not None
         ],
         dark=True,

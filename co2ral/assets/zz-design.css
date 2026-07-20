@@ -149,6 +149,44 @@ a:hover {
     color: var(--ds-accent);
 }
 
+/* Two logo files are rendered; each theme shows the one whose ink contrasts with the
+   header. Falls back gracefully: when only one file exists it carries no variant class
+   and stays visible in both themes. */
+.fau-logo-for-dark {
+    display: none;
+}
+
+[data-bs-theme="dark"] .fau-logo-for-light {
+    display: none;
+}
+
+[data-bs-theme="dark"] .fau-logo-for-dark {
+    display: inline-block;
+}
+
+/* Bootstrap draws the toggler icon for a dark navbar; on the light header it needs the
+   dark stroke, and the collapsed links need the header's text colour. */
+#main-nav .navbar-toggler {
+    border-color: var(--ds-border);
+    padding: 4px 8px;
+}
+
+#main-nav .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%231e293b' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+[data-bs-theme="dark"] #main-nav .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23e8edf4' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Stacked links below the lg breakpoint get separators; from lg up they sit in a row. */
+@media (max-width: 991.98px) {
+    #navbar-collapse .nav-link {
+        padding: 8px 4px;
+        border-top: 1px solid var(--ds-border-soft);
+    }
+}
+
 #lang-segmented {
     background: var(--ds-surface-soft) !important;
     border: 1px solid var(--ds-border) !important;

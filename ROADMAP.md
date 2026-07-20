@@ -72,11 +72,10 @@ Fundament: Das Gleichgewicht soll *unmittelbar* auf Eingriffe reagieren.
 
 ## Phase 3.5 — Aktives Lernen
 
-- [x] **Vorhersage-Modus (M)** — zuschaltbar (Schalter oder `?predict=1`): Nach jeder
-      Reglerbewegung werden alle Wasserwerte verdeckt und eine Frage gestellt
-      („Was passiert mit dem pH?"). Erst nach dem Tipp erscheinen die Werte, zusammen mit
-      Rückmeldung und einer fachlichen Begründung. Der CO₂-Regler fragt nach dem pH,
-      der Temperaturregler nach dem gelösten CO₂.
+- [ ] **Vorhersage-Modus (M)** — war umgesetzt und wurde auf Wunsch wieder entfernt
+      (Juli 2026). Die Idee bleibt offen: Nach einer Reglerbewegung erst tippen lassen
+      („Was passiert mit dem pH?"), dann Werte und Begründung zeigen. Falls er zurückkommt,
+      liegt die frühere Umsetzung in der Git-Historie.
 - [ ] **Selbstkontrolle mit erklärendem Feedback (M)** — eingebettete Verständnisfragen
       pro Szenario, Feedback verweist auf die passende Stelle im Bild.
 - [ ] **Beobachtungs-Box (S)** — Lernende formulieren in einem Satz, was sie sehen;
