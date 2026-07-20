@@ -43,6 +43,7 @@ def plot_cell(
 
     title_container = dmc.Badge(
         title,
+        className="plot-title-badge",
         style={
             "border-bottom-left-radius": "0px",
             "border-bottom-right-radius": "0px",

@@ -361,6 +361,15 @@ a:hover {
     border-radius: var(--ds-radius-card);
 }
 
+/* Plot title bar: Mantine centres a badge's label with auto margins, which pushed the plot
+   title toward the middle (most visible on the wide speciation tile). Left-align it and let
+   it fill the row, so the title sits at the left and the download button stays at the right. */
+.plot-title-badge .mantine-Badge-label {
+    margin-inline: 0;
+    flex: 1 1 auto;
+    text-align: left;
+}
+
 /* ---------- draggable plot grid ---------- */
 
 /* Below the lg breakpoint the react-grid-layout tiles are forced into a plain stacked
