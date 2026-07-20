@@ -195,8 +195,10 @@ a:hover {
 
 /* ---------- surfaces ---------- */
 
-.mantine-Card-root,
-.mantine-Paper-root {
+/* The ocean scene is excluded: it keeps a light sky and blue water in both themes and
+   draws its own text in fixed dark ink, so a themed surface would make it unreadable. */
+.mantine-Card-root:not(.ocean-card),
+.mantine-Paper-root:not(.ocean-card) {
     background: var(--ds-surface);
     border-color: var(--ds-border);
     border-radius: var(--ds-radius-card);
@@ -347,7 +349,11 @@ a:hover {
 
 /* The scene brings its own palette and stays as it is; only its cards pick up
    the design's radius so they match the rest of the page. */
+/* Stated explicitly rather than inherited, so the value tiles stay light in both themes -
+   their labels and figures are drawn in fixed dark ink. */
 .ocean-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(15, 23, 42, 0.12);
     border-radius: var(--ds-radius-tile);
 }
 
